@@ -201,13 +201,13 @@ elif env['toolchain']=='iar-proj':
     
 elif env['toolchain']=='armgcc':
     
-    if env['board'] not in ['silabs-ezr32wg','openmote-cc2538','openmote-b','openmote-b-24ghz','openmote-b-subghz','iot-lab_M3','iot-lab_A8-M3','openmotestm', 'samr21_xpro', 'scum']:
+    if env['board'] not in ['silabs-ezr32wg','openmote-cc2538','openmote-b','openmote-b-24ghz','openmote-b-subghz','iot-lab_M3','iot-lab_A8-M3','openmotestm', 'samr21_xpro', 'scum', 'remote']:
         raise SystemError('toolchain {0} can not be used for board {1}'.format(env['toolchain'],env['board']))
     
-    if   env['board'] in ['openmote-cc2538','openmote-b','openmote-b-24ghz', 'openmote-b-subghz']:
+    if   env['board'] in ['openmote-cc2538','openmote-b','openmote-b-24ghz', 'openmote-b-subghz', 'remote']:
         if env['revision'] == "A1":
             linker_file = 'cc2538sf23.lds'
-            print "*** OPENMOTE CC2538 REV. A1 ***\n"
+            print "*** CC2538 REV. A1 ***\n"
         else:
             linker_file = 'cc2538sf53.lds'
         
@@ -871,7 +871,7 @@ def BootloadFunc():
             suffix      = '.phonyupload',
             src_suffix  = '.ihex',
         )
-    elif env['board'] in ['openmote-cc2538','openmote-b','openmote-b-24ghz', 'openmote-b-subghz'] :
+    elif env['board'] in ['openmote-cc2538','openmote-b','openmote-b-24ghz', 'openmote-b-subghz', 'remote'] :
         if 'testbed' in env['bootload'] or len(env['bootload'].split(',')[0].split('-'))==8:
             return Builder(
                 action      = opentestbed_bootload,

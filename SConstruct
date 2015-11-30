@@ -115,6 +115,7 @@ command_line_options = {
         'openmote-b-subghz',
         'silabs-ezr32wg',
         'openmotestm',
+        'remote',
         'iot-lab_M3',
         'iot-lab_A8-M3',
         'agilefox',

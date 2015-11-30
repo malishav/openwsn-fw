@@ -629,16 +629,16 @@ def telosb_bootload(target, source, env):
 
 class OpenMoteCC2538_bootloadThread(threading.Thread):
     def __init__(self,comPort,hexFile,countingSem):
-        
+
         # store params
         self.comPort         = comPort
         self.hexFile         = hexFile
         self.countingSem     = countingSem
-        
+
         # initialize parent class
         threading.Thread.__init__(self)
         self.name            = 'OpenMoteCC2538_bootloadThread_{0}'.format(self.comPort)
-    
+
     def run(self):
         print 'starting bootloading on {0}'.format(self.comPort)
         subprocess.call(
@@ -646,10 +646,10 @@ class OpenMoteCC2538_bootloadThread(threading.Thread):
             shell=True
         )
         print 'done bootloading on {0}'.format(self.comPort)
-        
+
         # indicate done
         self.countingSem.release()
-        
+
 def OpenMoteCC2538_bootload(target, source, env):
     bootloadThreads = []
     countingSem     = threading.Semaphore(0)
@@ -676,20 +676,69 @@ def OpenMoteCC2538_bootload(target, source, env):
     # wait for threads to finish
     for t in bootloadThreads:
         countingSem.acquire()
-        
-        
+
+class CC2538BSL_bootloadThread(threading.Thread):
+    def __init__(self,comPort,hexFile,countingSem):
+
+        # store params
+        self.comPort         = comPort
+        self.hexFile         = hexFile
+        self.countingSem     = countingSem
+
+        # initialize parent class
+        threading.Thread.__init__(self)
+        self.name            = 'CC2538BSL_bootloadThread_{0}'.format(self.comPort)
+
+    def run(self):
+        print 'starting bootloading on {0}'.format(self.comPort)
+        subprocess.call(
+            'python '+os.path.join('bootloader','cc2538-bsl','cc2538-bsl.py')+' -e -w -b 115200 -v -p {0} {1}'.format(self.comPort,self.hexFile),
+            shell=True
+        )
+        print 'done bootloading on {0}'.format(self.comPort)
+
+        # indicate done
+        self.countingSem.release()
+
+def CC2538BSL_bootload(target, source, env):
+    bootloadThreads = []
+    countingSem     = threading.Semaphore(0)
+
+    # Enumerate ports
+    comPorts = env['bootload'].split(',')
+
+    # Check comPorts to bootload
+    comPorts = expandBootloadPortList(comPorts)
+
+    # create threads
+    for comPort in comPorts:
+        bootloadThreads += [
+            CC2538BSL_bootloadThread(
+                comPort      = comPort,
+                #hexFile      = os.path.split(source[0].path)[1].split('.')[0]+'.bin',
+                hexFile      = source[0].path.split('.')[0]+'.ihex',
+                countingSem  = countingSem,
+            )
+        ]
+    # start threads
+    for t in bootloadThreads:
+        t.start()
+    # wait for threads to finish
+    for t in bootloadThreads:
+        countingSem.acquire()
+
 class opentestbed_bootloadThread(threading.Thread):
     def __init__(self,mote,hexFile,countingSem):
-        
+
         # store params
         self.mote            = mote
         self.hexFile         = hexFile
         self.countingSem     = countingSem
-        
+
         # initialize parent class
         threading.Thread.__init__(self)
         self.name            = 'OpenMoteCC2538_bootloadThread_{0}'.format(self.mote)
-    
+
     def run(self):
         print 'starting bootloading on {0}'.format(self.mote)
         if self.mote == 'opentestbed':
@@ -701,10 +750,10 @@ class opentestbed_bootloadThread(threading.Thread):
             shell=True
         )
         print 'done bootloading on {0}'.format(self.mote)
-        
+
         # indicate done
         self.countingSem.release()
-        
+
 def opentestbed_bootload(target, source, env):
     bootloadThreads = []
     countingSem     = threading.Semaphore(0)
@@ -871,13 +920,19 @@ def BootloadFunc():
             suffix      = '.phonyupload',
             src_suffix  = '.ihex',
         )
-    elif env['board'] in ['openmote-cc2538','openmote-b','openmote-b-24ghz', 'openmote-b-subghz', 'remote'] :
+    elif env['board'] in ['openmote-cc2538','openmote-b','openmote-b-24ghz','openmote-b-subghz','iot-lab_A8-M3', 'remote'] :
         if 'testbed' in env['bootload'] or len(env['bootload'].split(',')[0].split('-'))==8:
             return Builder(
                 action      = opentestbed_bootload,
                 suffix      = '.phonyupload',
                 src_suffix  = '.ihex',
             )
+        elif env['board']=='remote':
+            return Builder(
+                action      = CC2538BSL_bootload,
+                suffix      = '.phonyupload',
+                src_suffix  = '.bin',
+        )
         else:
             return Builder(
                 action      = OpenMoteCC2538_bootload,

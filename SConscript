@@ -48,6 +48,8 @@ if env['l2_security']==1:
     env.Append(CPPDEFINES    = 'L2_SECURITY_ACTIVE')
 if env['deadline_option']==1:
     env.Append(CPPDEFINES    = 'DEADLINE_OPTION_ENABLED')
+if env['armour_test_alter_request']==1:
+    env.Append(CPPDEFINES    = 'ARMOUR_TEST_ALTER_REQUEST')
 
 if env['toolchain']=='mspgcc':
     

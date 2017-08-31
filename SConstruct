@@ -79,6 +79,8 @@ project:
     noadaptivesync Do not use adaptive synchronization.
     l2_security   Use hop-by-hop encryption and authentication.
                   0 (off), 1 (on)
+    armour_test_alter_request Enable Join Proxy to act as a MITM attacker and
+                    alter Join Requests.
     ide           qtcreator
 
     Common variables:
@@ -137,6 +139,7 @@ command_line_options = {
     'debug':            ['0','1'],
     'noadaptivesync':   ['0','1'],
     'l2_security':      ['0','1'],
+    'armour_test_alter_request': ['0','1'],
     'deadline_option':  ['0','1'],
     'ide':              ['none','qtcreator'],
     'revision':         ['']
@@ -281,6 +284,13 @@ command_line_vars.AddVariables(
         'l2_security',                                     # key
         '',                                                # help
         command_line_options['l2_security'][0],            # default
+        validate_option,                                   # validator
+        int,                                               # converter
+    ),
+    (
+        'armour_test_alter_request',                       # key
+        '',                                                # help
+        command_line_options['armour_test_alter_request'][0], # default
         validate_option,                                   # validator
         int,                                               # converter
     ),

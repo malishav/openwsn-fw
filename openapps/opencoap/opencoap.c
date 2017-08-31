@@ -966,6 +966,10 @@ void opencoap_handle_proxy_scheme(OpenQueueEntry_t *msg,
     const uint8_t proxySchemeCoap[] = "coap";
     const uint8_t uriHost6tisch[] = "6tisch.arpa";
     open_addr_t JRCaddress;
+#ifdef ARMOUR_TEST_ALTER_REQUEST
+    coap_option_iht *objectSec;
+#endif
+
 
     // verify that Proxy Scheme is set to coap
     proxyScheme = opencoap_find_option(incomingOptions, incomingOptionsLen, COAP_OPTION_NUM_PROXYSCHEME);
@@ -1006,6 +1010,19 @@ void opencoap_handle_proxy_scheme(OpenQueueEntry_t *msg,
     // the JRC is co-located with DAG root, get the address from RPL module
     JRCaddress.type = ADDR_128B;
     if (icmpv6rpl_getRPLDODAGid(JRCaddress.addr_128b) == E_SUCCESS) {
+#ifdef ARMOUR_TEST_ALTER_REQUEST
+        if (msg->length) {
+            msg->payload[msg->length-1] ^= 0xff;
+        }
+        else {
+            objectSec = opencoap_find_option(outgoingOptions, outgoingOptionsLen, COAP_OPTION_NUM_OBJECTSECURITY);
+            if (objectSec) {
+                // alter the MIC bits
+                objectSec->pValue[objectSec->length-1] ^= 0xff;
+            }
+        }
+#endif
+
         opencoap_forward_message(msg, header, outgoingOptions, outgoingOptionsLen, &JRCaddress, WKP_UDP_COAP);
     }
     return;

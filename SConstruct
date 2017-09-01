@@ -83,6 +83,8 @@ project:
                     alter Join Requests.
     armour_test_replay Enable Join Proxy to generate replay attack by replaying
                     the Join Request to the JRC.
+    armour_test_eavesdropping Enable Join Proxy to attempt eavesdropping on the Join
+                    Request by parsing the payload.
     ide           qtcreator
 
     Common variables:
@@ -143,6 +145,7 @@ command_line_options = {
     'l2_security':      ['0','1'],
     'armour_test_alter_request': ['0','1'],
     'armour_test_replay':['0','1'],
+    'armour_test_eavesdropping':['0','1'],
     'deadline_option':  ['0','1'],
     'ide':              ['none','qtcreator'],
     'revision':         ['']
@@ -301,6 +304,13 @@ command_line_vars.AddVariables(
         'armour_test_replay',                              # key
         '',                                                # help
         command_line_options['armour_test_replay'][0],     # default
+        validate_option,                                   # validator
+        int,                                               # converter
+    ),
+    (
+        'armour_test_eavesdropping',                       # key
+        '',                                                # help
+        command_line_options['armour_test_eavesdropping'][0], # default
         validate_option,                                   # validator
         int,                                               # converter
     ),

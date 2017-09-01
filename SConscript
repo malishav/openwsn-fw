@@ -52,6 +52,8 @@ if env['armour_test_alter_request']==1:
     env.Append(CPPDEFINES    = 'ARMOUR_TEST_ALTER_REQUEST')
 if env['armour_test_replay']==1:
     env.Append(CPPDEFINES    = 'ARMOUR_TEST_REPLAY')
+if env['armour_test_eavesdropping']==1:
+    env.Append(CPPDEFINES    = 'ARMOUR_TEST_EAVESDROPPING')
 
 if env['toolchain']=='mspgcc':
     

@@ -268,6 +268,9 @@ enum {
    ERR_REPLAY_FAILED                   = 0x47, // OSCOAP replay protection failed
    ERR_DECRYPTION_FAILED               = 0x48, // OSCOAP decryption and tag verification failed
    ERR_ABORT_JOIN_PROCESS              = 0x49, // Aborted join process {code location {0}}
+   // ARMOUR tests error codes 
+   ERR_ARMOUR_EAVESDROPPING_FAIL       = 0x4a, // [ARMOUR] Eavesdropping FAIL.
+   ERR_ARMOUR_EAVESDROPPING_SUCCESS    = 0x4b, // [ARMOUR] Eavesdropping SUCCESS.
 };
 
 //=========================== typedef =========================================

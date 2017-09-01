@@ -10,6 +10,9 @@
 #include "scheduler.h"
 #include "cryptoengine.h"
 #include "icmpv6rpl.h"
+#ifdef ARMOUR_TEST_EAVESDROPPING
+#include "cbor.h"
+#endif
 
 //=========================== defines =========================================
 
@@ -1042,6 +1045,10 @@ void opencoap_handle_stateless_proxy(OpenQueueEntry_t *msg,
     open_addr_t eui64;
     open_addr_t destIP;
     open_addr_t link_local_prefix;
+#ifdef ARMOUR_TEST_EAVESDROPPING
+    join_response_t join_response;
+    owerror_t ret;
+#endif
 
     statelessProxy = opencoap_find_option(incomingOptions, incomingOptionsLen, COAP_OPTION_NUM_STATELESSPROXY);
     if (statelessProxy == NULL) {    
@@ -1072,6 +1079,26 @@ void opencoap_handle_stateless_proxy(OpenQueueEntry_t *msg,
         // unsupported
         return;
     }
+
+#ifdef ARMOUR_TEST_EAVESDROPPING
+    ret = cbor_parse_join_response(&join_response, msg->payload, msg->length);
+    if (ret == E_FAIL) { 
+        openserial_printError(
+                    COMPONENT_OPENCOAP,
+                    ERR_ARMOUR_EAVESDROPPING_FAIL,
+                    (errorparameter_t)0,
+                    (errorparameter_t)0
+            );
+    } 
+    else if (ret == E_SUCCESS) {
+        openserial_printError(
+                    COMPONENT_OPENCOAP,
+                    ERR_ARMOUR_EAVESDROPPING_SUCCESS,
+                    (errorparameter_t)0,
+                    (errorparameter_t)0
+            );
+    }
+#endif
 
     outgoingOptionsLen = 0;
  

@@ -81,6 +81,8 @@ project:
                   0 (off), 1 (on)
     armour_test_alter_request Enable Join Proxy to act as a MITM attacker and
                     alter Join Requests.
+    armour_test_replay Enable Join Proxy to generate replay attack by replaying
+                    the Join Request to the JRC.
     ide           qtcreator
 
     Common variables:
@@ -140,6 +142,7 @@ command_line_options = {
     'noadaptivesync':   ['0','1'],
     'l2_security':      ['0','1'],
     'armour_test_alter_request': ['0','1'],
+    'armour_test_replay':['0','1'],
     'deadline_option':  ['0','1'],
     'ide':              ['none','qtcreator'],
     'revision':         ['']
@@ -291,6 +294,13 @@ command_line_vars.AddVariables(
         'armour_test_alter_request',                       # key
         '',                                                # help
         command_line_options['armour_test_alter_request'][0], # default
+        validate_option,                                   # validator
+        int,                                               # converter
+    ),
+    (
+        'armour_test_replay',                              # key
+        '',                                                # help
+        command_line_options['armour_test_replay'][0],     # default
         validate_option,                                   # validator
         int,                                               # converter
     ),

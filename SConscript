@@ -50,6 +50,8 @@ if env['deadline_option']==1:
     env.Append(CPPDEFINES    = 'DEADLINE_OPTION_ENABLED')
 if env['armour_test_alter_request']==1:
     env.Append(CPPDEFINES    = 'ARMOUR_TEST_ALTER_REQUEST')
+if env['armour_test_replay']==1:
+    env.Append(CPPDEFINES    = 'ARMOUR_TEST_REPLAY')
 
 if env['toolchain']=='mspgcc':
     

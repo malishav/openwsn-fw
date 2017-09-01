@@ -82,6 +82,9 @@ void opencoap_init() {
    opencoap_vars.desc.port              = WKP_UDP_COAP;
    opencoap_vars.desc.callbackReceive   = &opencoap_receive;
    opencoap_vars.desc.callbackSendDone  = opencoap_sendDone;
+#ifdef ARMOUR_TEST_REPLAY
+   opencoap_vars.savedRequest           = NULL;
+#endif
    openudp_register(&opencoap_vars.desc);
 }
 
@@ -1022,7 +1025,6 @@ void opencoap_handle_proxy_scheme(OpenQueueEntry_t *msg,
             }
         }
 #endif
-
         opencoap_forward_message(msg, header, outgoingOptions, outgoingOptionsLen, &JRCaddress, WKP_UDP_COAP);
     }
     return;
@@ -1181,8 +1183,34 @@ void opencoap_forward_message(OpenQueueEntry_t *msg,
             header->Code,
             header->messageID,
             header->token);
-   
+
+#ifdef ARMOUR_TEST_REPLAY
+    // if Join Request, save it for later use
+    if (header->Code == COAP_CODE_REQ_GET) {
+        opencoap_vars.savedRequest = openqueue_getFreePacketBuffer(COMPONENT_OPENCOAP);
+        if (opencoap_vars.savedRequest!=NULL) {
+            packetfunctions_duplicatePacket(opencoap_vars.savedRequest, outgoingPacket);
+        }
+        else {
+            openserial_printError(
+                    COMPONENT_OPENCOAP,
+                    ERR_NO_FREE_PACKET_BUFFER,
+                    (errorparameter_t)0,
+                    (errorparameter_t)0
+            );
+            openqueue_freePacketBuffer(opencoap_vars.savedRequest);
+        }
+    }
+#endif
     if ((openudp_send(outgoingPacket))==E_FAIL) {
       openqueue_freePacketBuffer(outgoingPacket);
     }
+#ifdef ARMOUR_TEST_REPLAY
+    // if Join Response, time to replay the request
+    if (header->Code == COAP_CODE_RESP_CONTENT && opencoap_vars.savedRequest != NULL) {
+        if ((openudp_send(opencoap_vars.savedRequest))==E_FAIL) {
+            openqueue_freePacketBuffer(opencoap_vars.savedRequest);
+        }
+    }
+#endif
 }

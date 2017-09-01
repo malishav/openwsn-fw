@@ -213,6 +213,9 @@ typedef struct {
    uint8_t                      delayCounter;
    uint16_t                     messageID;
    coap_statelessproxy_vars_t   statelessProxy;
+#ifdef ARMOUR_TEST_REPLAY
+   OpenQueueEntry_t*            savedRequest;
+#endif
 } opencoap_vars_t;
 
 //=========================== prototypes ======================================

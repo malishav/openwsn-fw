@@ -21,7 +21,7 @@
 //=========================== defines =========================================
 
 /// inter-packet period (in ms)
-#define TIMEOUT                 60000
+#define TIMEOUT                 10000
 
 const uint8_t cjoin_path0[] = "j";
 
@@ -104,7 +104,7 @@ void cjoin_schedule() {
     uint16_t delay;
     
     if (cjoin_getIsJoined() == FALSE) {
-        delay = openrandom_get16b();
+        delay = openrandom_get16b() % TIMEOUT;
         
         opentimers_scheduleIn(cjoin_vars.timerId,
                 (uint32_t) delay, // random wait from 0 to 65535ms

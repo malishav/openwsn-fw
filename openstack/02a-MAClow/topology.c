@@ -56,24 +56,24 @@ bool topology_isAcceptablePacket(ieee802154_header_iht* ieee802514_header) {
    
    returnVal=FALSE;
    switch (idmanager_getMyID(ADDR_64B)->addr_64b[7]) {
-      case 0xdf:
+      case 0x64:
          if (
-               ieee802514_header->src.addr_64b[7]==0x66
+               ieee802514_header->src.addr_64b[7]==0x8c
             ) {
             returnVal=TRUE;
          }
          break;
-      case 0x66:
+      case 0x8c:
          if (
-               ieee802514_header->src.addr_64b[7]==0xdf ||
-               ieee802514_header->src.addr_64b[7]==0x4f
+               ieee802514_header->src.addr_64b[7]==0x64 ||
+               ieee802514_header->src.addr_64b[7]==0xe1
             ) {
             returnVal=TRUE;
          }
          break;
-      case 0x4f:
+      case 0xe1:
          if (
-               ieee802514_header->src.addr_64b[7]==0x66
+               ieee802514_header->src.addr_64b[7]==0x8c
             ) {
             returnVal=TRUE;
          }

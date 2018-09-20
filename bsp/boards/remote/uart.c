@@ -5,28 +5,30 @@
  * Description: CC2538-specific definition of the "uart" bsp module.
  */
 
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
 #include <headers/hw_ints.h>
 #include <headers/hw_ioc.h>
 #include <headers/hw_memmap.h>
 #include <headers/hw_types.h>
 
-#include "stdint.h"
-#include "stdio.h"
-#include "string.h"
-#include "uart.h"
-#include "uarthal.h"
-#include "interrupt.h"
-#include "sys_ctrl.h"
-#include "gpio.h"
+#include <source/gpio.h>
+#include <source/interrupt.h>
+#include <source/ioc.h>
+#include <source/sys_ctrl.h>
+#include <source/uarthal.h>
+
+
 #include "board.h"
-#include "ioc.h"
 #include "debugpins.h"
-#include "board_info.h"
+#include "uart.h"
 
 //=========================== defines =========================================
 
-#define PIN_UART_RXD            UART0_RXD_PIN_CONF
-#define PIN_UART_TXD            UART0_TXD_PIN_CONF
+#define PIN_UART_RXD            GPIO_PIN_0 // PA0 is UART RX
+#define PIN_UART_TXD            GPIO_PIN_1 // PA1 is UART TX
 
 //=========================== variables =======================================
 
@@ -43,7 +45,7 @@ static void uart_isr_private(void);
 
 //=========================== public ==========================================
 
-void uart_init() { 
+void uart_init(void) { 
    // reset local variables
    memset(&uart_vars,0,sizeof(uart_vars_t));
    
@@ -92,19 +94,19 @@ void uart_setCallbacks(uart_tx_cbt txCb, uart_rx_cbt rxCb) {
     uart_vars.rxCb = rxCb;
 }
 
-void uart_enableInterrupts(){
+void uart_enableInterrupts(void) {
     UARTIntEnable(UART0_BASE, UART_INT_RX | UART_INT_TX | UART_INT_RT);
 }
 
-void uart_disableInterrupts(){
+void uart_disableInterrupts(void) {
     UARTIntDisable(UART0_BASE, UART_INT_RX | UART_INT_TX | UART_INT_RT);
 }
 
-void uart_clearRxInterrupts(){
+void uart_clearRxInterrupts(void) {
     UARTIntClear(UART0_BASE, UART_INT_RX | UART_INT_RT);
 }
 
-void uart_clearTxInterrupts(){
+void uart_clearTxInterrupts(void) {
     UARTIntClear(UART0_BASE, UART_INT_TX);
 }
 
@@ -112,7 +114,7 @@ void  uart_writeByte(uint8_t byteToWrite){
 	UARTCharPut(UART0_BASE, byteToWrite);
 }
 
-uint8_t uart_readByte(){
+uint8_t uart_readByte(void) {
 	 int32_t i32Char;
      i32Char = UARTCharGet(UART0_BASE);
 	 return (uint8_t)(i32Char & 0xFF);
@@ -143,7 +145,7 @@ static void uart_isr_private(void){
 	debugpins_isr_clr();
 }
 
-kick_scheduler_t uart_tx_isr() {
+kick_scheduler_t uart_tx_isr(void) {
    uart_clearTxInterrupts(); // TODO: do not clear, but disable when done
    if (uart_vars.txCb != NULL) {
        uart_vars.txCb();
@@ -151,7 +153,7 @@ kick_scheduler_t uart_tx_isr() {
    return DO_NOT_KICK_SCHEDULER;
 }
 
-kick_scheduler_t uart_rx_isr() {
+kick_scheduler_t uart_rx_isr(void) {
    uart_clearRxInterrupts(); // TODO: do not clear, but disable when done
    if (uart_vars.rxCb != NULL) {
        uart_vars.rxCb();

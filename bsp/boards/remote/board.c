@@ -19,8 +19,7 @@
 #include "gptimer.h"
 #include "sys_ctrl.h"
 #include "interrupt.h"
-#include "bsp_timer.h"
-#include "radiotimer.h"
+#include "sctimer.h"
 #include "debugpins.h"
 #include "uart.h"
 #include "radio.h"
@@ -28,6 +27,8 @@
 #include "i2c.h"
 #include "sensors.h"
 #include "button.h"
+#include "cryptoengine.h"
+#include "pwm.h"
 
 //=========================== variables =======================================
 
@@ -76,12 +77,13 @@ void board_init(void) {
    leds_init();
    debugpins_init();
    button_init();
-   bsp_timer_init();
-   radiotimer_init();
+   sctimer_init();
    uart_init();
    radio_init();
    i2c_init();
    sensors_init();
+   cryptoengine_init();
+   pwm_init();
 }
 
 /**
@@ -99,7 +101,7 @@ void board_sleep(void) {
 void board_timer_init(void) {
 	// Configure the timer
 	TimerConfigure(GPTIMER2_BASE, GPTIMER_CFG_PERIODIC_UP);
-	
+
 	// Enable the timer
     TimerEnable(GPTIMER2_BASE, GPTIMER_BOTH);
 }
@@ -110,9 +112,9 @@ void board_timer_init(void) {
  */
 uint32_t board_timer_get(void) {
     uint32_t current;
-    
+
     current = TimerValueGet(GPTIMER2_BASE, GPTIMER_A) >> 5;
-    
+
     return current;
 }
 
@@ -127,7 +129,7 @@ bool board_timer_expired(uint32_t future) {
     current = TimerValueGet(GPTIMER2_BASE, GPTIMER_A) >> 5;
 
     remaining = (int32_t) (future - current);
-    
+
     if (remaining > 0) {
         return false;
     } else {

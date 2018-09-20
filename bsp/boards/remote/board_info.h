@@ -79,23 +79,28 @@
 #define PORT_PIN_RADIO_RESET_LOW()     // nothing
 
 //===== IEEE802154E timing
-#ifdef GOLDEN_IMAGE_ROOT
+
+#define SLOTDURATION 10 // in milliseconds
+
+#if SLOTDURATION==10
 // time-slot related
 #define PORT_TsSlotDuration                 328   // counter counts one extra count, see datasheet
 // execution speed related
 #define PORT_maxTxDataPrepare               10    //  305us (measured  82us)
 #define PORT_maxRxAckPrepare                10    //  305us (measured  83us)
 #define PORT_maxRxDataPrepare                4    //  122us (measured  22us)
-#define PORT_maxTxAckPrepare                10    //  122us (measured  94us)
+#define PORT_maxTxAckPrepare                15    //  122us (measured  94us)
 // radio speed related
 #ifdef L2_SECURITY_ACTIVE
-#define PORT_delayTx                         7    //  366us (measured xxxus)
+#define PORT_delayTx                         14    //  366us (measured xxxus)
 #else
-#define PORT_delayTx                        12    //  366us (measured xxxus)
+#define PORT_delayTx                         8    //  366us (measured xxxus)
 #endif
 #define PORT_delayRx                         0    //    0us (can not measure)
 // radio watchdog
-#else
+#endif
+
+#if SLOTDURATION==15
 // time-slot related
 #define PORT_TsSlotDuration                 492   // counter counts one extra count, see datasheet
 // execution speed related

@@ -40,10 +40,28 @@
 typedef struct {
    radio_capture_cbt         startFrame_cb;
    radio_capture_cbt         endFrame_cb;
-   radio_state_t             state; 
+   radio_state_t             state;
 } radio_vars_t;
 
 radio_vars_t radio_vars;
+
+static const radio_output_power_config_t cc2538_output_power[] = {
+   {  7, 0xFF },
+   {  5, 0xED },
+   {  3, 0xD5 },
+   {  1, 0xC5 },
+   {  0, 0xB6 },
+   { -1, 0xB0 },
+   { -3, 0xA1 },
+   { -5, 0x91 },
+   { -7, 0x88 },
+   { -9, 0x72 },
+   {-11, 0x62 },
+   {-13, 0x58 },
+   {-15, 0x42 },
+   {-24, 0x00 },
+};
+
 
 //=========================== prototypes ======================================
 
@@ -61,21 +79,21 @@ void     radio_isr_internal(void);
 //===== admin
 
 void radio_init(void) {
-   
+
    // clear variables
    memset(&radio_vars,0,sizeof(radio_vars_t));
-   
+
    // change state
    radio_vars.state          = RADIOSTATE_STOPPED;
    //flush fifos
    CC2538_RF_CSP_ISFLUSHRX();
    CC2538_RF_CSP_ISFLUSHTX();
-   
+
    radio_off();
-   
+
    //disable radio interrupts
    disable_radio_interrupts();
-   
+
    /*
    This CORR_THR value should be changed to 0x14 before attempting RX. Testing has shown that
    too many false frames are received if the reset value is used. Make it more likely to detect
@@ -85,16 +103,16 @@ void radio_init(void) {
    */
    HWREG(RFCORE_XREG_MDMCTRL1)    = 0x14;
    /* tuning adjustments for optimal radio performance; details available in datasheet */
-   
+
    HWREG(RFCORE_XREG_RXCTRL)      = 0x3F;
    /* Adjust current in synthesizer; details available in datasheet. */
    HWREG(RFCORE_XREG_FSCTRL)      = 0x55;
-   
+
      /* Makes sync word detection less likely by requiring two zero symbols before the sync word.
       * details available in datasheet.
       */
    HWREG(RFCORE_XREG_MDMCTRL0)    = 0x85;
-   
+
    /* Adjust current in VCO; details available in datasheet. */
    HWREG(RFCORE_XREG_FSCAL1)      = 0x01;
    /* Adjust target value for AGC control loop; details available in datasheet. */
@@ -201,6 +219,25 @@ void radio_setFrequency(uint8_t frequency) {
    // change state
    radio_vars.state = RADIOSTATE_FREQUENCY_SET;
 }
+
+// configure the radio to output at least @power dBm, or the maximum available power
+void radio_setTxPower(int8_t power) {
+   uint8_t               i;
+   uint8_t               reg_val;
+
+   // loop to find at-least :power: dBm in the look-up table
+   // if the max output power of a chip is higher than :power:, we configure the maximum
+   reg_val = cc2538_output_power[0].register_val;
+   for(i = sizeof(cc2538_output_power) / sizeof(radio_output_power_config_t) - 1; i >= 0; --i) {
+     if(power <= cc2538_output_power[i].power_dbm) {
+       reg_val = cc2538_output_power[i].register_val;
+       break;
+     }
+   }
+
+   HWREG(RFCORE_XREG_TXPOWER)     = reg_val;
+}
+
 
 void radio_rfOn(void) {
    //radio_on();

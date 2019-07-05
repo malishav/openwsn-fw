@@ -80,7 +80,7 @@
 
 //===== IEEE802154E timing
 
-#define SLOTDURATION 10 // in milliseconds
+#define SLOTDURATION 20 // in milliseconds
 
 #if SLOTDURATION==10
 // time-slot related
@@ -100,18 +100,18 @@
 // radio watchdog
 #endif
 
-#if SLOTDURATION==15
-// time-slot related
-#define PORT_TsSlotDuration                 492   // counter counts one extra count, see datasheet
-// execution speed related
-#define PORT_maxTxDataPrepare               66    // 2014us (measured 746us)
-#define PORT_maxRxAckPrepare                10    //  305us (measured  83us)
-#define PORT_maxRxDataPrepare               33    // 1007us (measured  84us)
-#define PORT_maxTxAckPrepare                22    //  305us (measured 219us)
-// radio speed related
-#define PORT_delayTx                        12    //  214us (measured 219us)
-#define PORT_delayRx                        0     //    0us (can not measure)
-// radio watchdog
+#if SLOTDURATION==20
+    #define PORT_TsSlotDuration                 655   //    20ms
+
+    // execution speed related
+    #define PORT_maxTxDataPrepare                15   //   458us (measured  213us)
+    #define PORT_maxRxAckPrepare                 10   //   305us (measured   86us)
+    #define PORT_maxRxDataPrepare                10   //   305us (measured   88us)
+    #define PORT_maxTxAckPrepare                 15   //   458us (measured  211us)
+
+    // radio speed related
+    #define PORT_delayTx                        13    //   397us (measured  388us)
+    #define PORT_delayRx                        0     //     0us (can not measure)
 #endif
 
 //===== adaptive_sync accuracy

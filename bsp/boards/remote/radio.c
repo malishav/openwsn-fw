@@ -549,18 +549,28 @@ void radio_isr_internal(void) {
       }
    }
    debugpins_isr_clr();
-   
-   return;
 }
 
 void radio_error_isr(void){
-   uint8_t rferrm;
-   
-   rferrm = (uint8_t)HWREG(RFCORE_XREG_RFERRM);
-   
-   if ((HWREG(RFCORE_XREG_RFERRM) & (((0x02)<<RFCORE_XREG_RFERRM_RFERRM_S)&RFCORE_XREG_RFERRM_RFERRM_M)) & ((uint32_t)rferrm))
-   {
-      HWREG(RFCORE_XREG_RFERRM) = ~(((0x02)<<RFCORE_XREG_RFERRM_RFERRM_S)&RFCORE_XREG_RFERRM_RFERRM_M);
-      //poipoi  -- todo handle error
-   }
+
+    uint8_t err_irq_status;
+
+    debugpins_isr_set();
+
+    // reading IRQ_STATUS
+    err_irq_status = HWREG(RFCORE_SFR_RFERRF);
+
+    IntPendClear(INT_RFCOREERR);
+
+    //clear interrupt
+    HWREG(RFCORE_SFR_RFERRF) = 0;
+
+    // STATUS0 Register
+    // start of frame event
+    if ((err_irq_status & RFCORE_SFR_RFERRF_RXOVERF) == RFCORE_SFR_RFERRF_RXOVERF) {
+        //flush it
+        CC2538_RF_CSP_ISFLUSHRX();
+    }
+
+    debugpins_isr_clr();
 }

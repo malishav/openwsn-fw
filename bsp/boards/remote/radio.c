@@ -62,7 +62,6 @@ static const radio_output_power_config_t cc2538_output_power[] = {
    {-24, 0x00 },
 };
 
-
 //=========================== prototypes ======================================
 
 void     enable_radio_interrupts(void);
@@ -117,12 +116,12 @@ void radio_init(void) {
    HWREG(RFCORE_XREG_FSCAL1)      = 0x01;
    /* Adjust target value for AGC control loop; details available in datasheet. */
    HWREG(RFCORE_XREG_AGCCTRL1)    = 0x15;
-   
+
    /* Tune ADC performance, details available in datasheet. */
    HWREG(RFCORE_XREG_ADCTEST0)    = 0x10;
    HWREG(RFCORE_XREG_ADCTEST1)    = 0x0E;
    HWREG(RFCORE_XREG_ADCTEST2)    = 0x03;
-   
+
    //update CCA register to -81db as indicated by manual.. won't be used..
    HWREG(RFCORE_XREG_CCACTRL0)    = 0xF8;
    /*
@@ -132,7 +131,7 @@ void radio_init(void) {
    HWREG(RFCORE_XREG_TXFILTCFG)   = 0x09;    /** TX anti-aliasing filter bandwidth */
    HWREG(RFCORE_XREG_AGCCTRL1)    = 0x15;     /** AGC target value */
    HWREG(ANA_REGS_O_IVCTRL)       = 0x0B;        /** Bias currents */
-   
+
    /* disable the CSPT register compare function */
    HWREG(RFCORE_XREG_CSPT)        = 0xFFUL;
    /*
@@ -141,33 +140,33 @@ void radio_init(void) {
     * RX and TX modes with FIFOs
     */
    HWREG(RFCORE_XREG_FRMCTRL0)    = RFCORE_XREG_FRMCTRL0_AUTOCRC;
-   
+
    //poipoi disable frame filtering by now.. sniffer mode.
    HWREG(RFCORE_XREG_FRMFILT0)   &= ~RFCORE_XREG_FRMFILT0_FRAME_FILTER_EN;
-   
+
    /* Disable source address matching and autopend */
    HWREG(RFCORE_XREG_SRCMATCH)    = 0;
-   
+
    /* MAX FIFOP threshold */
    HWREG(RFCORE_XREG_FIFOPCTRL)   = CC2538_RF_MAX_PACKET_LEN;
-   
+
    HWREG(RFCORE_XREG_TXPOWER)     = CC2538_RF_TX_POWER;
    HWREG(RFCORE_XREG_FREQCTRL)    = CC2538_RF_CHANNEL_MIN;
-   
+
    /* Enable RF interrupts  see page 751  */
    // enable_radio_interrupts();
-   
+
    //register interrupt
    IntRegister(INT_RFCORERTX, radio_isr_internal);
    IntRegister(INT_RFCOREERR, radio_error_isr);
-   
+
    IntEnable(INT_RFCORERTX);
-   
+
    /* Enable all RF Error interrupts */
    HWREG(RFCORE_XREG_RFERRM)      = RFCORE_XREG_RFERRM_RFERRM_M; //all errors
    IntEnable(INT_RFCOREERR);
    //radio_on();
-   
+
    // change state
    radio_vars.state               = RADIOSTATE_RFOFF;
 }
@@ -185,11 +184,11 @@ void radio_setEndFrameCb(radio_capture_cbt cb) {
 void radio_reset(void) {
    /* Wait for ongoing TX to complete (e.g. this could be an outgoing ACK) */
    while(HWREG(RFCORE_XREG_FSMSTAT1) & RFCORE_XREG_FSMSTAT1_TX_ACTIVE);
-   
+
    //flush fifos
    CC2538_RF_CSP_ISFLUSHRX();
    CC2538_RF_CSP_ISFLUSHTX();
-   
+
    /* Don't turn off if we are off as this will trigger a Strobe Error */
    if(HWREG(RFCORE_XREG_RXENABLE) != 0) {
       CC2538_RF_CSP_ISRFOFF();
@@ -209,13 +208,13 @@ void radio_setFrequency(uint8_t frequency) {
    if((frequency < CC2538_RF_CHANNEL_MIN) || (frequency > CC2538_RF_CHANNEL_MAX)) {
       while(1);
    }
-   
+
    /* Changes to FREQCTRL take effect after the next recalibration */
    HWREG(RFCORE_XREG_FREQCTRL) = (CC2538_RF_CHANNEL_MIN
       + (frequency - CC2538_RF_CHANNEL_MIN) * CC2538_RF_CHANNEL_SPACING);
-   
+
    //radio_on();
-   
+
    // change state
    radio_vars.state = RADIOSTATE_FREQUENCY_SET;
 }
@@ -238,13 +237,12 @@ void radio_setTxPower(int8_t power) {
    HWREG(RFCORE_XREG_TXPOWER)     = reg_val;
 }
 
-
 void radio_rfOn(void) {
    //radio_on();
 }
 
 void radio_rfOff(void) {
-   
+
    // change state
    radio_vars.state = RADIOSTATE_TURNING_OFF;
    radio_off();
@@ -253,7 +251,7 @@ void radio_rfOff(void) {
    leds_radio_off();
    //enable radio interrupts
    disable_radio_interrupts();
-   
+
    // change state
    radio_vars.state = RADIOSTATE_RFOFF;
 }
@@ -262,49 +260,49 @@ void radio_rfOff(void) {
 
 void radio_loadPacket(uint8_t* packet, uint16_t len) {
    uint8_t i=0;
-   
+
    // change state
    radio_vars.state = RADIOSTATE_LOADING_PACKET;
-   
+
    // load packet in TXFIFO
    /*
    When we transmit in very quick bursts, make sure previous transmission
    is not still in progress before re-writing to the TX FIFO
    */
    while(HWREG(RFCORE_XREG_FSMSTAT1) & RFCORE_XREG_FSMSTAT1_TX_ACTIVE);
-   
+
    CC2538_RF_CSP_ISFLUSHTX();
-   
+
    /* Send the phy length byte first */
     HWREG(RFCORE_SFR_RFDATA) = len; //crc len is included
-   
+
    for(i = 0; i < len; i++) {
       HWREG(RFCORE_SFR_RFDATA) = packet[i];
    }
-   
+
    // change state
    radio_vars.state = RADIOSTATE_PACKET_LOADED;
 }
 
 void radio_txEnable(void) {
-   
+
    // change state
    radio_vars.state = RADIOSTATE_ENABLING_TX;
-   
+
    // wiggle debug pin
    debugpins_radio_set();
    leds_radio_on();
-   
+
    //do nothing -- radio is activated by the strobe on rx or tx
    //radio_rfOn();
-   
+
    // change state
    radio_vars.state = RADIOSTATE_TX_ENABLED;
 }
 
 void radio_txNow(void) {
    PORT_TIMER_WIDTH count;
-   
+
    // change state
    radio_vars.state = RADIOSTATE_TRANSMITTING;
 
@@ -327,17 +325,17 @@ void radio_txNow(void) {
 //===== RX
 
 void radio_rxEnable(void) {
-   
+
    // change state
    radio_vars.state = RADIOSTATE_ENABLING_RX;
-   
+
    //enable radio interrupts
-   
+
    // do nothing as we do not want to receive anything yet.
    // wiggle debug pin
    debugpins_radio_set();
    leds_radio_on();
-   
+
    // change state
    radio_vars.state = RADIOSTATE_LISTENING;
 }
@@ -345,11 +343,11 @@ void radio_rxEnable(void) {
 void radio_rxNow(void) {
    //empty buffer before receiving
    //CC2538_RF_CSP_ISFLUSHRX();
-   
+
    //enable radio interrupts
    CC2538_RF_CSP_ISFLUSHRX();
    enable_radio_interrupts();
-   
+
    CC2538_RF_CSP_ISRXON();
    // busy wait until radio really listening
    while(!((HWREG(RFCORE_XREG_FSMSTAT1) & RFCORE_XREG_FSMSTAT1_RX_ACTIVE)));
@@ -362,49 +360,49 @@ void radio_getReceivedFrame(uint8_t* pBufRead,
                             uint8_t* pLqi,
                                bool* pCrc) {
    uint8_t crc_corr,i;
-   
+
    uint8_t len=0;
-   
+
    /* Check the length */
    len = HWREG(RFCORE_SFR_RFDATA); //first byte is len
-   
-   
+
+
    /* Check for validity */
    if(len > CC2538_RF_MAX_PACKET_LEN) {
       /* wrong len */
       CC2538_RF_CSP_ISFLUSHRX();
       return;
    }
-   
-   
+
+
    if(len <= CC2538_RF_MIN_PACKET_LEN) {
       //too short
       CC2538_RF_CSP_ISFLUSHRX();
       return;
    }
-   
+
    //check if this fits to the buffer
    if(len > maxBufLen) {
       CC2538_RF_CSP_ISFLUSHRX();
       return;
    }
-   
+
    // when reading the packet from the RX buffer, you get the following:
    // - *[1B]     length byte
    // -  [0-125B] packet (excluding CRC)
    // -  [1B]     RSSI
    // - *[2B]     CRC
-   
+
    //skip first byte is len
    for(i = 0; i < len - 2; i++) {
       pBufRead[i] = HWREG(RFCORE_SFR_RFDATA);
    }
-   
+
    *pRssi     = ((int8_t)(HWREG(RFCORE_SFR_RFDATA)) - RSSI_OFFSET);
    crc_corr   = HWREG(RFCORE_SFR_RFDATA);
    *pCrc      = crc_corr & CRC_BIT_MASK;
    *pLenRead  = len;
-   
+
    //flush it
    CC2538_RF_CSP_ISFLUSHRX();
 }
@@ -435,7 +433,7 @@ void radio_off(void){
    /* Wait for ongoing TX to complete (e.g. this could be an outgoing ACK) */
    while(HWREG(RFCORE_XREG_FSMSTAT1) & RFCORE_XREG_FSMSTAT1_TX_ACTIVE);
    //CC2538_RF_CSP_ISFLUSHRX();
-   
+
    /* Don't turn off if we are off as this will trigger a Strobe Error */
    if(HWREG(RFCORE_XREG_RXENABLE) != 0) {
       CC2538_RF_CSP_ISRFOFF();
@@ -473,22 +471,22 @@ kick_scheduler_t radio_isr(void) {
 void radio_isr_internal(void) {
    volatile PORT_TIMER_WIDTH capturedTime;
    uint8_t  irq_status0,irq_status1;
-   
+
    debugpins_isr_set();
-   
+
    // capture the time
    capturedTime = sctimer_readCounter();
-   
+
    // reading IRQ_STATUS
    irq_status0 = HWREG(RFCORE_SFR_RFIRQF0);
    irq_status1 = HWREG(RFCORE_SFR_RFIRQF1);
-   
+
    IntPendClear(INT_RFCORERTX);
-   
+
    //clear interrupt
    HWREG(RFCORE_SFR_RFIRQF0) = 0;
    HWREG(RFCORE_SFR_RFIRQF1) = 0;
-   
+
    //STATUS0 Register
    // start of frame event
    if ((irq_status0 & RFCORE_SFR_RFIRQF0_SFD) == RFCORE_SFR_RFIRQF0_SFD) {
@@ -504,7 +502,7 @@ void radio_isr_internal(void) {
          while(1);
       }
    }
-   
+
    //or RXDONE is full -- we have a packet.
    if (((irq_status0 & RFCORE_SFR_RFIRQF0_RXPKTDONE) ==  RFCORE_SFR_RFIRQF0_RXPKTDONE)) {
       // change state
@@ -519,7 +517,7 @@ void radio_isr_internal(void) {
          while(1);
       }
    }
-   
+
    // or FIFOP is full -- we have a packet.
    if (((irq_status0 & RFCORE_SFR_RFIRQF0_FIFOP) ==  RFCORE_SFR_RFIRQF0_FIFOP)) {
       // change state
@@ -534,7 +532,7 @@ void radio_isr_internal(void) {
          while(1);
       }
    }
-   
+
    //STATUS1 Register
    // end of frame event --either end of tx .
    if (((irq_status1 & RFCORE_SFR_RFIRQF1_TXDONE) == RFCORE_SFR_RFIRQF1_TXDONE)) {

@@ -99,10 +99,10 @@ void board_sleep(void) {
  * The timer is divided by 32, whichs gives a 1 microsecond ticks
  */
 void board_timer_init(void) {
-	// Configure the timer
-	TimerConfigure(GPTIMER2_BASE, GPTIMER_CFG_PERIODIC_UP);
-
-	// Enable the timer
+    // Configure the timer
+    TimerConfigure(GPTIMER2_BASE, GPTIMER_CFG_PERIODIC_UP);
+    
+    // Enable the timer
     TimerEnable(GPTIMER2_BASE, GPTIMER_BOTH);
 }
 
@@ -241,6 +241,7 @@ static void SysCtrlRunSetting(void) {
 
   /* Enable UART0 and RFC when running */
   SysCtrlPeripheralEnable(SYS_CTRL_PERIPH_GPT2);
+  SysCtrlPeripheralEnable(SYS_CTRL_PERIPH_GPT3);
   SysCtrlPeripheralEnable(SYS_CTRL_PERIPH_UART0);
   SysCtrlPeripheralEnable(SYS_CTRL_PERIPH_RFC);
 }
@@ -265,6 +266,7 @@ static void SysCtrlSleepSetting(void) {
 
   /* Enable UART, GPT2 and RFC during sleep */
   SysCtrlPeripheralSleepEnable(SYS_CTRL_PERIPH_GPT2);
+  SysCtrlPeripheralSleepEnable(SYS_CTRL_PERIPH_GPT3);
   SysCtrlPeripheralSleepEnable(SYS_CTRL_PERIPH_UART0);
   SysCtrlPeripheralSleepEnable(SYS_CTRL_PERIPH_RFC);
 }

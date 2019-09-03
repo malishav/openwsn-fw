@@ -173,17 +173,11 @@ void antenna_subghz(void) {
 //=========================== private =========================================
 
 static void gpio_init(void) {
-    /* Set GPIOs as output */
-    GPIOPinTypeGPIOOutput(GPIO_A_BASE, 0xFF);
-    GPIOPinTypeGPIOOutput(GPIO_B_BASE, 0xFF);
-    GPIOPinTypeGPIOOutput(GPIO_C_BASE, 0xFF);
-    GPIOPinTypeGPIOOutput(GPIO_D_BASE, 0xFF);
-
-    /* Initialize GPIOs to low */
-    GPIOPinWrite(GPIO_A_BASE, 0xFF, 0x00);
-    GPIOPinWrite(GPIO_B_BASE, 0xFF, 0x00);
-    GPIOPinWrite(GPIO_C_BASE, 0xFF, 0x00);
-    GPIOPinWrite(GPIO_D_BASE, 0xFF, 0x00);
+    /* Configure all GPIO as input */
+    GPIOPinTypeGPIOInput(GPIO_A_BASE, 0xFF);
+    GPIOPinTypeGPIOInput(GPIO_B_BASE, 0xFF);
+    GPIOPinTypeGPIOInput(GPIO_C_BASE, 0xFF);
+    GPIOPinTypeGPIOInput(GPIO_D_BASE, 0xFF);
 }
 
 static void clock_init(void) {
@@ -202,9 +196,9 @@ static void clock_init(void) {
     /* Set the system clock to 32 MHz */
     SysCtrlClockSet(true, false, SYS_CTRL_SYSDIV_32MHZ);
 
-    /* Set the IO clock to operate at 16 MHz */
+    /* Set the IO clock to operate at 32 MHz */
     /* This way peripherals can run while the system clock is gated */
-    SysCtrlIOClockSet(SYS_CTRL_SYSDIV_16MHZ);
+    SysCtrlIOClockSet(SYS_CTRL_SYSDIV_32MHZ);
 
     /* Wait until the selected clock configuration is stable */
     while (!((HWREG(SYS_CTRL_CLOCK_STA)) & (SYS_CTRL_CLOCK_STA_XOSC_STB)));
@@ -241,7 +235,6 @@ static void SysCtrlRunSetting(void) {
 
   /* Enable UART0 and RFC when running */
   SysCtrlPeripheralEnable(SYS_CTRL_PERIPH_GPT2);
-  SysCtrlPeripheralEnable(SYS_CTRL_PERIPH_GPT3);
   SysCtrlPeripheralEnable(SYS_CTRL_PERIPH_UART0);
   SysCtrlPeripheralEnable(SYS_CTRL_PERIPH_RFC);
 }
@@ -266,7 +259,6 @@ static void SysCtrlSleepSetting(void) {
 
   /* Enable UART, GPT2 and RFC during sleep */
   SysCtrlPeripheralSleepEnable(SYS_CTRL_PERIPH_GPT2);
-  SysCtrlPeripheralSleepEnable(SYS_CTRL_PERIPH_GPT3);
   SysCtrlPeripheralSleepEnable(SYS_CTRL_PERIPH_UART0);
   SysCtrlPeripheralSleepEnable(SYS_CTRL_PERIPH_RFC);
 }

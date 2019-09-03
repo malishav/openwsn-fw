@@ -728,25 +728,26 @@ def CC2538BSL_bootload(target, source, env):
         countingSem.acquire()
 
 class opentestbed_bootloadThread(threading.Thread):
-    def __init__(self,mote,hexFile,countingSem):
+    def __init__(self,testbed,mote,hexFile,countingSem):
 
         # store params
+	self.testbed         = testbed
         self.mote            = mote
         self.hexFile         = hexFile
         self.countingSem     = countingSem
 
         # initialize parent class
         threading.Thread.__init__(self)
-        self.name            = 'OpenMoteCC2538_bootloadThread_{0}'.format(self.mote)
+        self.name            = 'OpenTestbed_bootloadThread_{0}'.format(self.mote)
 
     def run(self):
-        print 'starting bootloading on {0}'.format(self.mote)
+        print 'starting bootloading on testbed={0} motes=all'.format(self.testbed,self.mote)
         if self.mote == 'opentestbed':
             target  = 'all'
         else:
             target  = self.mote
         subprocess.call(
-            'python '+os.path.join('bootloader','openmote-cc2538','ot_program.py')+' -a {0} {1}'.format(target,self.hexFile),
+            'python '+os.path.join('bootloader','opentestbed','ot_program.py')+' -t {0} -a {1} {2}'.format(self.testbed,target,self.hexFile),
             shell=True
         )
         print 'done bootloading on {0}'.format(self.mote)
@@ -757,14 +758,27 @@ class opentestbed_bootloadThread(threading.Thread):
 def opentestbed_bootload(target, source, env):
     bootloadThreads = []
     countingSem     = threading.Semaphore(0)
+
+    if 'openmote' in env['board']:
+        testbed = 'opentestbed'
+    elif 'remote' == env['board']:
+        testbed = 'wilab'
+    elif 'iot-lab_A8-M3' == env['board']:
+	testbed = 'iotlab'
+    else:
+        raise SystemError('unexpected board={0} for bootloading on testbed.'.format(env['board']))
         
     # Enumerate ports
-    motes = env['bootload'].split(',')
+    if env['bootload'] == 'testbed':
+        motes = ["all"]
+    else:
+        motes = env['bootload'].split(',')
 
     # create threads
     for mote in motes:
         bootloadThreads += [
             opentestbed_bootloadThread(
+                testbed      = testbed,
                 mote         = mote,
                 hexFile      = source[0].path.split('.')[0]+'.ihex',
                 countingSem  = countingSem,

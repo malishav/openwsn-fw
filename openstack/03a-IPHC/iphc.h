@@ -172,6 +172,7 @@ typedef struct {
    uint8_t*    deadline_option;
 #endif   
    uint8_t     hop_limit;
+   uint8_t*    hop_limit_ptr;
    uint8_t	   rhe_length;
    open_addr_t src;
    open_addr_t dest;

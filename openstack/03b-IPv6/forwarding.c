@@ -192,8 +192,8 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
                 flow_label, // value_flowlabel
                 next_header,
                 msg->l4_protocol, // value nh. If compressed this is ignored as LOWPAN_NH is already there.
-                IPHC_HLIM_64,
-                ipv6_outer_header.hop_limit,
+                IPHC_HLIM_INLINE,
+                IPHC_DEFAULT_HOP_LIMIT,
                 IPHC_CID_NO,
                 sac,
                 sam,

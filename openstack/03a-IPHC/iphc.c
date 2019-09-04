@@ -142,6 +142,12 @@ owerror_t iphc_sendFromForwarding(
     //IPinIP 6LoRH will be added at here if necessary.
     if (packetfunctions_sameAddress(&temp_dest_prefix,&temp_src_prefix)){
         // same network, IPinIP is elided
+
+	// write hop count in the packet
+	if(ipv6_inner_header->hop_limit_ptr != NULL) {
+	    *(ipv6_inner_header->hop_limit_ptr) = ipv6_inner_header->hop_limit;
+	}
+
     } else {
         if (packetfunctions_isBroadcastMulticast(&(msg->l3_destinationAdd))==FALSE){
           memset(&(temp_dagroot_ip128b),0,sizeof(open_addr_t));
@@ -904,17 +910,21 @@ uint8_t iphc_retrieveIphcHeader(open_addr_t* temp_addr_16b,
        // hop limit
        switch (*hlim) {
           case IPHC_HLIM_INLINE:
-             ipv6_header->hop_limit         = *((uint8_t*)(msg->payload+ipv6_header->header_length+previousLen));
+	     ipv6_header->hop_limit_ptr     = (uint8_t*)(msg->payload+ipv6_header->header_length+previousLen);
+	     ipv6_header->hop_limit         = *(ipv6_header->hop_limit_ptr);
              ipv6_header->header_length    += sizeof(uint8_t);
              break;
           case IPHC_HLIM_1:
              ipv6_header->hop_limit         = 1;
+	     ipv6_header->hop_limit_ptr     = NULL;
              break;
           case IPHC_HLIM_64:
              ipv6_header->hop_limit         = 64;
+	     ipv6_header->hop_limit_ptr     = NULL;
              break;
           case IPHC_HLIM_255:
              ipv6_header->hop_limit         = 255;
+	     ipv6_header->hop_limit_ptr     = NULL;
              break;
           default:
              openserial_printError(

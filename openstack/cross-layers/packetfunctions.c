@@ -106,7 +106,7 @@ bool packetfunctions_isBroadcastMulticast(open_addr_t* address) {
             address_length = 8;
             break;
         default:
-            openserial_printCritical(COMPONENT_PACKETFUNCTIONS,ERR_WRONG_ADDR_TYPE,
+            openserial_printError(COMPONENT_PACKETFUNCTIONS,ERR_WRONG_ADDR_TYPE,
                                (errorparameter_t)address->type,
                                (errorparameter_t)4);
             return FALSE;

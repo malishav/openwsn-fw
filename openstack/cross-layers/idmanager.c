@@ -192,7 +192,7 @@ bool idmanager_isMyAddress(open_addr_t* addr) {
         ENABLE_INTERRUPTS();
         return res;
      default:
-        openserial_printCritical(COMPONENT_IDMANAGER,ERR_WRONG_ADDR_TYPE,
+        openserial_printError(COMPONENT_IDMANAGER,ERR_WRONG_ADDR_TYPE,
               (errorparameter_t)addr->type,
               (errorparameter_t)2);
         ENABLE_INTERRUPTS();

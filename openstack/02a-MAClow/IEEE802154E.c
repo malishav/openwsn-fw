@@ -3018,7 +3018,7 @@ void endSlot(void) {
     }
 
     // resume serial activity (if we are still BEFORE DURATION_si)
-    if (DURATION_si+ieee154e_vars.startOfSlotReference-opentimers_getValue()<ieee154e_vars.slotDuration) {
+    if (DURATION_si>opentimers_getValue()-ieee154e_vars.startOfSlotReference) {
         openserial_inhibitStop(); // end of slot
     }
 }

@@ -19,6 +19,7 @@ typedef struct {
     uint8_t                  noResponse;
     uint8_t                  cmdBuf[16];
     uint8_t                  cmdBufLen;
+    uint8_t                  busySending;
 } cbenchmark_vars_t;
 
 typedef struct {

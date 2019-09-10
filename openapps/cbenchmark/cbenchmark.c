@@ -13,9 +13,11 @@
 #include "idmanager.h"
 #include "eui64.h"
 #include "neighbors.h"
+#include "schedule.h"
 #include "cbenchmark.h"
 #include "IEEE802154E.h"
 #include "iphc.h"
+#include "icmpv6rpl.h"
 
 //=========================== defines =========================================
 
@@ -41,6 +43,9 @@ void cbenchmark_sendPacket_task_cb(void);
 //=========================== public ==========================================
 
 void cbenchmark_init() {
+
+   memset(&cbenchmark_vars, 0, sizeof(cbenchmark_vars_t));
+
    // prepare the resource descriptor for the /b path
    cbenchmark_vars.desc.path0len                        = sizeof(cbenchmark_path0)-1;
    cbenchmark_vars.desc.path0val                        = (uint8_t*)(&cbenchmark_path0);
@@ -147,6 +152,7 @@ owerror_t cbenchmark_receive(OpenQueueEntry_t* msg,
 }
 
 void cbenchmark_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
+    cbenchmark_vars.busySending--;
     openqueue_freePacketBuffer(msg);
 }
 
@@ -166,10 +172,38 @@ void cbenchmark_sendPacket_task_cb(void) {
     uint8_t                      numOptions;
     uint8_t                      i;
     uint8_t                      timestamp[5];
+    bool                         foundNeighbor;
+    open_addr_t                  parentNeighbor;
 
     numOptions = 0;
     i = 0;
 
+    // sanity checks
+    // don't run if not synch
+    if (ieee154e_isSynch() == FALSE) {
+        return;
+    }
+
+    // don't run on dagroot
+    if (idmanager_getIsDAGroot()) {
+        return;
+    }
+
+    foundNeighbor = icmpv6rpl_getPreferredParentEui64(&parentNeighbor);
+    if (foundNeighbor==FALSE) {
+        return;
+    }
+
+    if (schedule_hasNegotiatedCellToNeighbor(&parentNeighbor, CELLTYPE_TX) == FALSE) {
+        return;
+    }
+
+    if (cbenchmark_vars.busySending>0) {
+        // don't continue if I'm still sending a previous cbenchmark packet
+        return;
+    }
+
+    // all is good, proceed to the parsing of the serial command
     if (cbenchmark_parse_sendPacket(cbenchmark_vars.cmdBuf, cbenchmark_vars.cmdBufLen, &request) != E_SUCCESS) {
         return;
     }
@@ -254,6 +288,8 @@ void cbenchmark_sendPacket_task_cb(void) {
             );
         }
         else {
+            // increment busySending 
+            cbenchmark_vars.busySending++;
             cbenchmark_printSerial_packetSentReceived(BENCHMARK_EVENT_PACKETSENT, request.token, &request.dest, IPHC_DEFAULT_HOP_LIMIT);
         }
     }

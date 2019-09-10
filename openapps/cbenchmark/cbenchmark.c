@@ -64,8 +64,6 @@ void cbenchmark_init() {
    // Register sendPacket handler callback
    openserial_registerSendPacketCb(&cbenchmark_sendPacket);
 
-   cbenchmark_vars.timerId = opentimers_create(TIMER_GENERAL_PURPOSE, TASKPRIO_COAP);
-
 }
 
 //=========================== private =========================================

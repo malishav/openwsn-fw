@@ -173,7 +173,6 @@ void cbenchmark_sendPacket_task_cb(void) {
     bool                         foundNeighbor;
     open_addr_t                  parentNeighbor;
 
-    numOptions = 0;
     i = 0;
 
     // sanity checks
@@ -227,6 +226,8 @@ void cbenchmark_sendPacket_task_cb(void) {
         // take ownership over that packet
         pkt->creator                   = COMPONENT_CBENCHMARK;
         pkt->owner                     = COMPONENT_CBENCHMARK;
+
+	numOptions = 0;
 
         // location-path option
         options[numOptions].type = COAP_OPTION_NUM_URIPATH;

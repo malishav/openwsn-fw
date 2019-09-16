@@ -376,6 +376,22 @@ OpenQueueEntry_t*  openqueue_macGetUnicastPakcet(open_addr_t* toNeighbor){
        }
     }
 
+    // second to look the sixtop request packet
+    for (i=0;i<QUEUELENGTH;i++) {
+       if (
+           openqueue_vars.queue[i].owner    ==  COMPONENT_SIXTOP_TO_IEEE802154E &&
+           openqueue_vars.queue[i].creator  ==  COMPONENT_SIXTOP_RES &&
+           (
+               toNeighbor->type == ADDR_64B &&
+               packetfunctions_sameAddress(toNeighbor,&openqueue_vars.queue[i].l2_nextORpreviousHop)
+           ) &&
+           openqueue_vars.queue[i].l2_sixtop_messageType == SIXTOP_CELL_REQUEST
+       ){
+          ENABLE_INTERRUPTS();
+          return &openqueue_vars.queue[i];
+       }
+    }
+
     // if reach here, then looking for other unicast packets
     for (i=0;i<QUEUELENGTH;i++) {
         if (

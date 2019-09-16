@@ -85,7 +85,7 @@ owerror_t cbenchmark_receive(OpenQueueEntry_t* msg,
     // check if this is a request
     if (coap_header->Code==COAP_CODE_REQ_POST) {
         // sanity check
-        if (msg->length < 5) {
+        if (msg->length != 5) {
             // log formatting error
                 openserial_printError(
                     COMPONENT_CBENCHMARK,
@@ -96,10 +96,7 @@ owerror_t cbenchmark_receive(OpenQueueEntry_t* msg,
                 return E_FAIL;
         }
 
-        // toss everything but the last 5 bytes
-        packetfunctions_tossHeader(msg, msg->length - 5);
-
-        // get the token from the remaining 5 bytes of payload
+        // get the token from the 5 bytes of payload
         memcpy(token, msg->payload, 5);
 
         // generate packetReceived event for this request
@@ -257,10 +254,6 @@ void cbenchmark_sendPacket_task_cb(void) {
 
         // set the first byte of the token to packet counter
         pkt->payload[0] = i;
-
-        // zero-out the payload
-        packetfunctions_reserveHeaderSize(pkt, request.payloadLen);
-        memset(pkt->payload, 0x00, request.payloadLen);
 
         // get the current ASN
         ieee154e_getAsn(timestamp);

@@ -741,7 +741,7 @@ class opentestbed_bootloadThread(threading.Thread):
         self.name            = 'OpenTestbed_bootloadThread_{0}'.format(self.mote)
 
     def run(self):
-        print 'starting bootloading on testbed={0} motes=all'.format(self.testbed,self.mote)
+        print 'starting bootloading on testbed={0} motes={1}'.format(self.testbed,self.mote)
         if self.mote == 'opentestbed':
             target  = 'all'
         else:

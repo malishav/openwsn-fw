@@ -213,7 +213,7 @@ elif env['toolchain']=='armgcc':
         
         # compiler (C)
         env.Replace(CC           = 'arm-none-eabi-gcc')
-        env.Append(CCFLAGS       = '-O0')
+        env.Append(CCFLAGS       = '-O3')
         env.Append(CCFLAGS       = '-Wall')
         env.Append(CCFLAGS       = '-Wa,-adhlns=${TARGET.base}.lst')
         env.Append(CCFLAGS       = '-c')

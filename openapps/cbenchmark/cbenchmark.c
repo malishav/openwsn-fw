@@ -169,6 +169,7 @@ void cbenchmark_sendPacket_task_cb(void) {
     uint8_t                      timestamp[5];
     bool                         foundNeighbor;
     open_addr_t                  parentNeighbor;
+    uint8_t                      token[CBENCHMARK_PACKETTOKEN_LEN];
 
     i = 0;
 
@@ -254,6 +255,7 @@ void cbenchmark_sendPacket_task_cb(void) {
 
         // set the first byte of the token to packet counter
         pkt->payload[0] = i;
+	memcpy(token, pkt->payload, CBENCHMARK_PACKETTOKEN_LEN);
 
         // get the current ASN
         ieee154e_getAsn(timestamp);
@@ -282,7 +284,7 @@ void cbenchmark_sendPacket_task_cb(void) {
         else {
             // increment busySending 
             cbenchmark_vars.busySending++;
-            cbenchmark_printSerial_packetSentReceived(BENCHMARK_EVENT_PACKETSENT, request.token, &request.dest, IPHC_DEFAULT_HOP_LIMIT);
+            cbenchmark_printSerial_packetSentReceived(BENCHMARK_EVENT_PACKETSENT, token, &request.dest, IPHC_DEFAULT_HOP_LIMIT);
         }
     }
 }

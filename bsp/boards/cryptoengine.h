@@ -7,7 +7,7 @@
 #ifndef __CRYPTO_ENGINE_H__
 #define __CRYPTO_ENGINE_H__
 
-#include "opendefs.h"
+#include "defs.h"
 
 //=========================== define ==========================================
 #define CBC_MAX_MAC_SIZE  16

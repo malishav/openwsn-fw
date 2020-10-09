@@ -11,10 +11,20 @@
 #include <string.h>
 
 #include "sdk/modules/nrfx/templates/nRF52840/nrfx_config.h"
-#include "opendefs.h"
 
 
 //=========================== defines =========================================
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#define E_FAIL          (-1)
+#define E_SUCCESS       (0)
 
 //===== interrupt state
 

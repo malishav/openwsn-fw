@@ -8,7 +8,7 @@
 \{
 */
 
-#include "opendefs.h"
+#include "defs.h"
 
 typedef struct task_llist_t {
    task_cbt                       cb;

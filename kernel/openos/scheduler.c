@@ -4,7 +4,7 @@
 \author Thomas Watteyne <watteyne@eecs.berkeley.edu>, February 2012.
 */
 
-#include "opendefs.h"
+#include "defs.h"
 #include "scheduler.h"
 #include "board.h"
 #include "debugpins.h"
@@ -19,8 +19,6 @@ scheduler_dbg_t scheduler_dbg;
 #endif
 
 //=========================== prototypes ======================================
-
-void consumeTask(uint8_t taskId);
 
 //=========================== public ==========================================
 

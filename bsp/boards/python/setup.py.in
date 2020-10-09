@@ -1,0 +1,71 @@
+"""
+Setup script that builds the openwsn-fw as a Python3 module
+author: Timothy Claeys
+"""
+# !/usr/bin/env python3
+
+import os
+from distutils.core import setup, Extension
+from glob import glob
+
+project_home = '${CMAKE_SOURCE_DIR}'
+
+sources = \
+    [
+        *glob(os.path.join(project_home, 'bsp', 'boards', 'python', '*.c')),
+        *glob(os.path.join(project_home, 'kernel', 'openos', '*.c')),
+        *glob(os.path.join(project_home, 'drivers', '*.c')),
+        *glob(os.path.join(project_home, 'drivers', 'crypto', '*.c')),
+        *glob(os.path.join(project_home, 'stack', '*.c')),
+        *glob(os.path.join(project_home, 'stack', '02a-MAClow', '*.c')),
+        *glob(os.path.join(project_home, 'stack', '02b-MAChigh', '*.c')),
+        *glob(os.path.join(project_home, 'stack', '03a-IPHC', '*.c')),
+        *glob(os.path.join(project_home, 'stack', '03b-IPv6', '*.c')),
+        *glob(os.path.join(project_home, 'stack', '04-TRAN', '*.c')),
+        *glob(os.path.join(project_home, 'stack', 'cross-layers', '*.c')),
+        *glob(os.path.join(project_home, 'web', '*.c')),
+        *glob(os.path.join(project_home, 'web', 'coap', '*.c')),
+        *glob(os.path.join(project_home, 'apps', '*.c')),
+        *glob(os.path.join(project_home, 'apps', 'cjoin', '*.c')),
+        *glob(os.path.join(project_home, 'apps', 'uecho', '*.c')),
+        *glob(os.path.join(project_home, 'projects', 'common', '03oos_openwsn', '*.c')),
+    ]
+
+openwsn_module = Extension(
+    'openwsn',
+    define_macros=[
+        ('PYTHON_BOARD', '1'),
+        ('OPENWSN_UDP_C', '${OPENWSN_UDP_C}'),
+        ('OPENWSN_ICMPV6ECHO_C', '${OPENWSN_ICMPV6ECHO_C}'),
+    ],
+    sources=sources,
+    include_dirs=[
+        os.path.join(project_home, 'inc'),
+        os.path.join(project_home, 'bsp', 'boards'),
+        os.path.join(project_home, 'bsp', 'boards', 'python'),
+        os.path.join(project_home, 'kernel'),
+        os.path.join(project_home, 'kernel', 'openos'),
+        os.path.join(project_home, 'drivers'),
+        os.path.join(project_home, 'drivers', 'crypto'),
+        os.path.join(project_home, 'stack'),
+        os.path.join(project_home, 'stack', '02a-MAClow'),
+        os.path.join(project_home, 'stack', '02b-MAChigh'),
+        os.path.join(project_home, 'stack', '03a-IPHC'),
+        os.path.join(project_home, 'stack', '03b-IPv6'),
+        os.path.join(project_home, 'stack', '04-TRAN'),
+        os.path.join(project_home, 'stack', 'cross-layers'),
+        os.path.join(project_home, 'web'),
+        os.path.join(project_home, 'web', 'coap'),
+        os.path.join(project_home, 'apps'),
+        os.path.join(project_home, 'apps', 'uecho'),
+        os.path.join(project_home, 'apps', 'cjoin'),
+        os.path.join(project_home, 'projects', 'common', '03oos_openwsn'),
+    ]
+)
+
+setup(name='openwsn',
+      version="${CMAKE_PROJECT_VERSION}",
+      author='Timothy Claeys',
+      author_email='timothy.claeys@gmail.com',
+      description='The OpenWSN-FW project compiled as a Python extension',
+      ext_modules=[openwsn_module])

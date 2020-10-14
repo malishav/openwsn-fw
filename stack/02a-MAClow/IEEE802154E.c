@@ -152,10 +152,6 @@ void changeState(ieee154e_state_t newstate);
 
 void endSlot(void);
 
-bool debugPrint_asn(void);
-
-bool debugPrint_isSync(void);
-
 // interrupts
 void isr_ieee154e_newSlot(opentimers_id_t id);
 

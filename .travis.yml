@@ -1,17 +1,26 @@
 language: c
 
+env:
+  - BOARD=PYTHON BUILD_FOLDER=python TOOLCHAIN=""
+  - BOARD=OPENMOTE-CC2538 BUILD_FOLDER=cc2538 TOOLCHAIN=cmake/toolchains/cc2538.cmake
+
 before_script:
-- python --version
-- pip install --user pip
-- sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6D1D8367A3421AFB
-- sudo add-apt-repository -y ppa:team-gcc-arm-embedded/ppa
-- sudo apt update
-- sudo apt install scons
-- scons --version
-- sudo apt install gcc-arm-embedded
-- arm-none-eabi-gcc --version
-- sudo apt install doxygen
-- doxygen --version
+  - DEPS_DIR="${HOME}/deps"
+  - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
+  - CMAKE_URL="https://cmake.org/files/v3.19/cmake-3.19.0-rc1-Linux-x86_64.tar.gz"
+  - mkdir cmake_build && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake_build
+  - export PATH=${DEPS_DIR}/cmake_build/bin:${PATH}
+  - echo $PATH
+  - cmake --version
+  - cd ${TRAVIS_BUILD_DIR}
+  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6D1D8367A3421AFB
+  - sudo add-apt-repository -y ppa:team-gcc-arm-embedded/ppa
+  - sudo apt update
+  - sudo apt install gcc-arm-embedded
+  - arm-none-eabi-gcc --version
+  - mkdir -p build/$BUILD_FOLDER
+  - cd build/$BUILD_FOLDER
 
 script:
-- mkdir -p ./build/doc/
+  - cmake ../.. -DBOARD=$BOARD -DPROJECT=OOS_OPENWSN -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN
+  - make oos_openwsn

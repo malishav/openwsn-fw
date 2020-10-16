@@ -1,8 +1,9 @@
 language: c
 
 env:
-  - BOARD=PYTHON BUILD_FOLDER=python TOOLCHAIN=""
-  - BOARD=OPENMOTE-CC2538 BUILD_FOLDER=cc2538 TOOLCHAIN=cmake/toolchains/cc2538.cmake
+  - BOARD=python TOOLCHAIN=""
+  - BOARD=openmote-cc2538 TOOLCHAIN=cmake/toolchains/cc2538.cmake
+  - BOARD=iot-lab_M3 TOOLCHAIN=cmake/toolchains/m3.cmake
 
 before_script:
   - DEPS_DIR="${HOME}/deps"
@@ -18,9 +19,9 @@ before_script:
   - sudo apt update
   - sudo apt install gcc-arm-embedded
   - arm-none-eabi-gcc --version
-  - mkdir -p build/$BUILD_FOLDER
-  - cd build/$BUILD_FOLDER
+  - mkdir -p build
+  - cd build
 
 script:
-  - cmake ../.. -DBOARD=$BOARD -DPROJECT=OOS_OPENWSN -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN
+  - cmake .. -DBOARD=$BOARD -DPROJECT=oos_openwsn -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN
   - make oos_openwsn

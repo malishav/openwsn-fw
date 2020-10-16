@@ -26,7 +26,7 @@ to return the board's description.
 #define FALSE 0
 #endif
 
-#define E_FAIL          (-1)
+#define E_FAIL          (1)
 #define E_SUCCESS       (0)
 
 //TODO in case previous declaration fails in certain compilers. Remove this

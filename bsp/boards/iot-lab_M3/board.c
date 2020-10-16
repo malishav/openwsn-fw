@@ -7,8 +7,9 @@
 
 #include "config.h"
 #include "stm32f10x_conf.h"
-#include "board.h"
+
 // bsp modules
+#include "board.h"
 #include "leds.h"
 #include "uart.h"
 #include "spi.h"
@@ -17,9 +18,7 @@
 #include "rcc.h"
 #include "nvic.h"
 #include "debugpins.h"
-#include "opentimers.h"
 #include "gpio.h"
-#include "cryptoengine.h"
 
 //=========================== main ============================================
 

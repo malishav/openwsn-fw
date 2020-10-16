@@ -27,7 +27,7 @@
 #define FALSE 0
 #endif
 
-#define E_FAIL          (-1)
+#define E_FAIL          (1)
 #define E_SUCCESS       (0)
 
 //===== interrupt state

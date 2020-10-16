@@ -59,6 +59,8 @@ void openbridge_triggerData(void) {
 }
 
 void openbridge_sendDone(QueueEntry_t *msg, owerror_t error) {
+    (void) error;
+
     msg->owner = COMPONENT_OPENBRIDGE;
     if (msg->creator != COMPONENT_OPENBRIDGE) {
         LOG_ERROR(COMPONENT_OPENBRIDGE, ERR_UNEXPECTED_SENDDONE, (errorparameter_t) 0, (errorparameter_t) 0);
@@ -80,7 +82,7 @@ void openbridge_receive(QueueEntry_t *msg) {
     memcpy(msg->payload, idmanager_getMyID(ADDR_64B)->addr_64b, LENGTH_ADDR64b);
 
     // send packet over serial (will be memcopied into serial buffer)
-    openserial_printData((uint8_t * )(msg->payload), msg->length);
+    openserial_printData((uint8_t *) (msg->payload), msg->length);
 
     // free packet
     queue_freePacketBuffer(msg);

@@ -17,6 +17,8 @@
 
 #include "config.h"
 
+#if OPENWSN_6LO_FRAGMENTATION_C
+
 #include "defs.h"
 #include "queue.h"
 #include "timers.h"
@@ -113,5 +115,7 @@ void frag_sendDone(QueueEntry_t *msg, owerror_t sendError);
 void frag_receive(QueueEntry_t *msg);
 
 owerror_t frag_fragment6LoPacket(QueueEntry_t *msg);
+
+#endif
 
 #endif /* OPENWSN_FRAG_H */

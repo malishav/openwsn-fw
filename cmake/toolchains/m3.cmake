@@ -18,11 +18,11 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mthumb")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mcpu=cortex-m3")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdata-sections")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto")
 
 UNSET(CMAKE_EXE_LINKER_FLAGS CACHE)
 
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
 set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -T${CMAKE_SOURCE_DIR}/bsp/boards/iot-lab_M3/stm32_flash.ld")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -nostartfiles -specs=nosys.specs -specs=nano.specs")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Map,iotlab-m3.map")

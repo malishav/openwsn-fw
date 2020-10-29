@@ -14,6 +14,10 @@ set(BOARD "" CACHE STRING "Select a target platform: openmote-cc2538, python, io
 set(PROJECT "" CACHE STRING "Select a project: oos_openwsn")
 set(BOOTLOAD "" CACHE STRING "Select ports to bootload, e.g., /dev/ttyUSBX")
 
+if ("${PROJECT}" STREQUAL "" OR "${BOARD}" STREQUAL "")
+    message(FATAL_ERROR "No project or board selected")
+endif ()
+
 # Force default build type to Debug
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING

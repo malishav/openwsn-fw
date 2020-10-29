@@ -16,4 +16,4 @@ add_custom_command(OUTPUT ${OUTPUT}
 
 add_custom_target(${PROJECT} ALL DEPENDS ${OUTPUT} SOURCES ${SOURCES})
 
-add_custom_target(install_${PROJECT} DEPENDS ${OUTPUT} COMMAND ${Python3_EXECUTABLE} ${SETUP_PY} install --user)
+add_custom_target(install_${PROJECT} DEPENDS ${OUTPUT} COMMAND ${Python3_EXECUTABLE} ${SETUP_PY} install --user --prefix=)

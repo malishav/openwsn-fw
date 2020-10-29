@@ -34,9 +34,26 @@ sources = \
 openwsn_module = Extension(
     'openwsn',
     define_macros=[
+        # board name
         ('PYTHON_BOARD', '1'),
+
+        # stack modules
+        ('OPENWSN_COAP_C', '${OPENWSN_COAP_C}'),
         ('OPENWSN_UDP_C', '${OPENWSN_UDP_C}'),
         ('OPENWSN_ICMPV6ECHO_C', '${OPENWSN_ICMPV6ECHO_C}'),
+        ('OPENWSN_6LO_FRAGMENTATION_C', '${OPENWSN_6LO_FRAGMENTATION_C}'),
+
+        # stack configuration
+        ('ADAPTIVE_MSF', '${ADAPTIVE_MSF}'),
+        ('DAGROOT', '${DAGROOT}'),
+
+        # apps
+        ('OPENWSN_CJOIN_C', '${OPENWSN_CJOIN_C}'),
+        ('OPENWSN_UECHO_C', '${OPENWSN_UECHO_C}'),
+
+        # board options
+        ('BOARD_OPENSERIAL_PRINTF', '${BOARD_OPENSERIAL_PRINTF}'),
+
     ],
     sources=sources,
     include_dirs=[

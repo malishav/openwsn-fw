@@ -1,6 +1,6 @@
 #include "config.h"
 
-#if OPENWSN_UDP_C
+#if defined(OPENWSN_UDP_C)
 
 #include "sock_internal.h"
 #include "serial.h"

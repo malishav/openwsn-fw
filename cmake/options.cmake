@@ -1,5 +1,9 @@
-set(OPENWSN_LOG_LEVEL "6" CACHE STRING "Select a logging level: 0 (no logs) - 6 (all logs)")
-add_definitions(-DOPENWSN_LOG_LEVEL=${OPENWSN_LOG_LEVEL})
+if (NOT LOG_LEVEL)
+    set(LOG_LEVEL "6" CACHE STRING "Select a logging level: 0 (no logs) - 6 (all logs)" FORCE)
+    add_definitions(-DOPENWSN_LOG_LEVEL=${LOG_LEVEL})
+else ()
+    add_definitions(-DOPENWSN_LOG_LEVEL=${LOG_LEVEL})
+endif ()
 
 option(COAP "Enable the COAP protocol" OFF)
 if (COAP)

@@ -13,24 +13,35 @@ if (POLICY CMP0057)
     cmake_policy(SET CMP0057 NEW)
 endif ()
 
-# list with all platforms
+# list all platforms and boards
 set(ALL_BOARDS openmote-cc2538 python iot-lab_M3)
 set(ALL_PROJECTS oos_openwsn)
 
 # specify all the build options
-set(BOARD "python" CACHE STRING "Select a target platform: ${ALL_BOARDS}" FORCE)
-set(PROJECT "oos_openwsn" CACHE STRING "Select a project: ${ALL_PROJECTS}" FORCE)
+if (NOT BOARD)
+    set(BOARD "python" CACHE STRING "Select a target platform: ${ALL_BOARDS}" FORCE)
+endif ()
+
+if (NOT PROJECT)
+    set(PROJECT "oos_openwsn" CACHE STRING "Select a project: ${ALL_PROJECTS}" FORCE)
+endif ()
+
+if (NOT CMAKE_TOOLCHAIN_FILE)
+    set(CMAKE_TOOLCHAIN_FILE "" CACHE STRING "Set the toolchain file for cross-compiling" FORCE)
+endif ()
+
 set(BOOTLOAD "" CACHE STRING "Select ports to bootload, e.g., /dev/ttyUSBX")
+
+if (NOT "${BOARD}" STREQUAL "python" AND "${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
+    message(FATAL_ERROR "Cross-compiling requires an explicitly set toolchain, see cmake/toolchains/")
+endif ()
+
 
 if (${PROJECT} IN_LIST ALL_PROJECTS AND ${BOARD} IN_LIST ALL_BOARDS)
     message(STATUS "Selected board: ${BOARD}")
     message(STATUS "Building project: ${PROJECT}")
 else ()
     message(FATAL_ERROR "Invalid board or project selected")
-endif ()
-
-if (NOT "${BOARD}" STREQUAL "python" AND "${CMAKE_TOOLCHAIN_FILE}" STREQUAL "")
-    message(FATAL_ERROR "Cross-compiling requires an explicitly set toolchain, see cmake/toolchains/")
 endif ()
 
 # Force default build type to Debug unless already set (by an IDE or on the command line)

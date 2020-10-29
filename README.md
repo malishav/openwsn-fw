@@ -13,21 +13,22 @@ This fork currently supports three target platforms:
 
 ## Building
 
-To build the project we use `cmake`. Before you can build a binary you can upload to your device or run locally, you need to configure the build process (choose a target platform, a project and the development toolchain). 
+To build the project we use `cmake`. Before you can start compiling, you need to configure the build process (choose a target platform, a project and the development toolchain). 
 
 ### Python board
 
 The following command shows how to configure and build for the `python` board (here we can omit the toolchain parameter).
 
 ```bash
-$ cmake -S. -Bbuild -DBOARD=python -DPROJECT=oos_openwsn
+$ mkdir build && cd build
+$ cmake .. -DBOARD=python -DPROJECT=oos_openwsn
 $ cmake --build build
 ```
 
 To install the compiled Python C extension in the Python site-packages (so you can import it in your Python code), run:
 
 ```bash
-$ cmake --build build --target oos_openwsn_install
+$ cmake --build . --target install_oos_openwsn
 ```
 
 To test if everything went well, run:
@@ -40,14 +41,12 @@ If the command returns without error, the module was installed correctly.
 
 ### OpenMote-CC2538
 
-To compile for the openmote-cc2538 platform we can use the following commands:
+To compile for the openmote-cc2538 platform we can use the following commands (inside the `build` directory):
 
 ```bash
-$ cmake -S. -Bbuild -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/cc2538.cmake -DBOARD=openmote-cc2538 -DPROJECT=oos_openwsn
+$ cmake .. -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/cc2538.cmake -DBOARD=openmote-cc2538 -DPROJECT=oos_openwsn
 $ cmake --build build
 ```
-
-The `-S` and `-B` parameters specify the root of source code tree (where the root `CMakeLists.txt` lives) and the build folder, respectively.
 
 ## Build status
 

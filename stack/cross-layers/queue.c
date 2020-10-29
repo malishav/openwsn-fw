@@ -14,14 +14,14 @@
 
 //=========================== variables =======================================
 
-queue_vars_t openqueue_vars;
+queue_vars_t queue_vars;
 
 //=========================== prototypes ======================================
 
-void openqueue_reset_entry(QueueEntry_t *entry);
+void queue_reset_entry(QueueEntry_t *entry);
 
 #if OPENWSN_6LO_FRAGMENTATION_C
-void openqueue_reset_big_entry(OpenQueueBigEntry_t *entry);
+void queue_reset_big_entry(QueueBigEntry_t *entry);
 #endif
 
 //=========================== public ==========================================
@@ -34,12 +34,12 @@ void openqueue_reset_big_entry(OpenQueueBigEntry_t *entry);
 void queue_init() {
     uint8_t i;
     for (i = 0; i < QUEUE_LENGTH; i++) {
-        openqueue_reset_entry(&(openqueue_vars.queue[i]));
+        queue_reset_entry(&(queue_vars.queue[i]));
     }
 
 #if OPENWSN_6LO_FRAGMENTATION_C
     for (i = 0; i < BIG_QUEUE_LENGTH; i++) {
-        openqueue_reset_big_entry(&(openqueue_vars.big_queue[i]));
+        queue_reset_big_entry(&(queue_vars.big_queue[i]));
     }
 #endif
 }
@@ -56,8 +56,8 @@ bool debugPrint_queue() {
     debug_QueueEntry_t output[QUEUE_LENGTH];
     uint8_t i;
     for (i = 0; i < QUEUE_LENGTH; i++) {
-        output[i].creator = openqueue_vars.queue[i].creator;
-        output[i].owner = openqueue_vars.queue[i].owner;
+        output[i].creator = queue_vars.queue[i].creator;
+        output[i].owner = queue_vars.queue[i].owner;
     }
     openserial_printStatus(STATUS_QUEUE, (uint8_t * ) & output, QUEUE_LENGTH * sizeof(debug_QueueEntry_t));
     return TRUE;
@@ -72,7 +72,7 @@ Component throughout the protocol stack can call this function is they want to
 get a new packet buffer to start creating a new packet.
 
 \note Once a packet has been allocated, it is up to the creator of the packet
-      to free it using the openqueue_freePacketBuffer() function.
+      to free it using the queue_freePacketBuffer() function.
 
 \returns A pointer to the queue entry when it could be allocated, or NULL when
          it could not be allocated (buffer full or not synchronized).
@@ -98,11 +98,11 @@ QueueEntry_t* queue_getFreePacketBuffer(uint8_t creator) {
 
     // walk through queue and find free entry
     for (i = 0; i < QUEUE_LENGTH; i++) {
-        if (openqueue_vars.queue[i].owner == COMPONENT_NULL) {
-            openqueue_vars.queue[i].creator = creator;
-            openqueue_vars.queue[i].owner = COMPONENT_OPENQUEUE;
+        if (queue_vars.queue[i].owner == COMPONENT_NULL) {
+            queue_vars.queue[i].creator = creator;
+            queue_vars.queue[i].owner = COMPONENT_OPENQUEUE;
             ENABLE_INTERRUPTS();
-            return &openqueue_vars.queue[i];
+            return &queue_vars.queue[i];
         }
     }
     ENABLE_INTERRUPTS();
@@ -126,13 +126,13 @@ owerror_t queue_freePacketBuffer(QueueEntry_t *pkt) {
 #if OPENWSN_6LO_FRAGMENTATION_C
     if (pkt->is_big_packet) {
         for (i = 0; i < BIG_QUEUE_LENGTH; i++) {
-            if ((OpenQueueBigEntry_t *) pkt == &openqueue_vars.big_queue[i]) {
-                if (openqueue_vars.big_queue[i].standard_entry.owner == COMPONENT_NULL) {
+            if ((QueueBigEntry_t *) pkt == &queue_vars.big_queue[i]) {
+                if (queue_vars.big_queue[i].standard_entry.owner == COMPONENT_NULL) {
                     // log the error
                     LOG_CRITICAL(COMPONENT_OPENQUEUE, ERR_FREEING_UNUSED,(errorparameter_t) 0,(errorparameter_t) 0);
                 }
 
-                openqueue_reset_big_entry((OpenQueueBigEntry_t *) pkt);
+                queue_reset_big_entry((QueueBigEntry_t *) pkt);
                 ENABLE_INTERRUPTS();
                 return E_SUCCESS;
             }
@@ -140,12 +140,12 @@ owerror_t queue_freePacketBuffer(QueueEntry_t *pkt) {
     } else {
 #endif
         for (i = 0; i < QUEUE_LENGTH; i++) {
-            if (&openqueue_vars.queue[i] == pkt) {
-                if (openqueue_vars.queue[i].owner == COMPONENT_NULL) {
+            if (&queue_vars.queue[i] == pkt) {
+                if (queue_vars.queue[i].owner == COMPONENT_NULL) {
                     // log the error
                     LOG_CRITICAL(COMPONENT_OPENQUEUE, ERR_FREEING_UNUSED, (errorparameter_t) 0, (errorparameter_t) 0);
                 }
-                openqueue_reset_entry(&(openqueue_vars.queue[i]));
+                queue_reset_entry(&(queue_vars.queue[i]));
                 ENABLE_INTERRUPTS();
                 return E_SUCCESS;
             }
@@ -161,7 +161,7 @@ owerror_t queue_freePacketBuffer(QueueEntry_t *pkt) {
 }
 
 #if OPENWSN_6LO_FRAGMENTATION_C
-QueueEntry_t* openqueue_getFreeBigPacketBuffer(uint8_t creator) {
+QueueEntry_t* queue_getFreeBigPacketBuffer(uint8_t creator) {
     uint8_t i;
 
     INTERRUPT_DECLARATION();
@@ -174,14 +174,14 @@ QueueEntry_t* openqueue_getFreeBigPacketBuffer(uint8_t creator) {
     }
 
     for (i = 0; i < BIG_QUEUE_LENGTH; i++) {
-        if (openqueue_vars.big_queue[i].standard_entry.owner == COMPONENT_NULL) {
+        if (queue_vars.big_queue[i].standard_entry.owner == COMPONENT_NULL) {
 
-            openqueue_vars.big_queue[i].standard_entry.creator = creator;
-            openqueue_vars.big_queue[i].standard_entry.owner = COMPONENT_OPENQUEUE;
-            openqueue_vars.big_queue[i].standard_entry.is_big_packet = TRUE;
+            queue_vars.big_queue[i].standard_entry.creator = creator;
+            queue_vars.big_queue[i].standard_entry.owner = COMPONENT_OPENQUEUE;
+            queue_vars.big_queue[i].standard_entry.is_big_packet = TRUE;
 
             ENABLE_INTERRUPTS();
-            return &openqueue_vars.big_queue[i].standard_entry;
+            return &queue_vars.big_queue[i].standard_entry;
 
         }
     }
@@ -202,17 +202,17 @@ void queue_removeAllCreatedBy(uint8_t creator) {
     DISABLE_INTERRUPTS();
     for (i = 0; i < QUEUE_LENGTH; i++) {
         if (
-                openqueue_vars.queue[i].creator == creator &&
-                openqueue_vars.queue[i].owner != COMPONENT_IEEE802154E
+                queue_vars.queue[i].creator == creator &&
+                queue_vars.queue[i].owner != COMPONENT_IEEE802154E
                 ) {
-            openqueue_reset_entry(&(openqueue_vars.queue[i]));
+            queue_reset_entry(&(queue_vars.queue[i]));
         }
     }
 
 #if OPENWSN_6LO_FRAGMENTATION_C
     for (i = 0; i < BIG_QUEUE_LENGTH; i++) {
-        if (openqueue_vars.big_queue[i].standard_entry.creator == creator) {
-            openqueue_reset_big_entry(&(openqueue_vars.big_queue[i]));
+        if (queue_vars.big_queue[i].standard_entry.creator == creator) {
+            queue_reset_big_entry(&(queue_vars.big_queue[i]));
         }
     }
 #endif
@@ -227,19 +227,19 @@ QueueEntry_t* queue_sixtopGetSentPacket() {
     INTERRUPT_DECLARATION();
     DISABLE_INTERRUPTS();
     for (i = 0; i < QUEUE_LENGTH; i++) {
-        if (openqueue_vars.queue[i].owner == COMPONENT_IEEE802154E_TO_SIXTOP &&
-            openqueue_vars.queue[i].creator != COMPONENT_IEEE802154E) {
+        if (queue_vars.queue[i].owner == COMPONENT_IEEE802154E_TO_SIXTOP &&
+            queue_vars.queue[i].creator != COMPONENT_IEEE802154E) {
             ENABLE_INTERRUPTS();
-            return &openqueue_vars.queue[i];
+            return &queue_vars.queue[i];
         }
     }
 
 #if OPENWSN_6LO_FRAGMENTATION_C
     for (i = 0; i < BIG_QUEUE_LENGTH; i++) {
-        if (((QueueEntry_t*)&openqueue_vars.big_queue[i])->owner == COMPONENT_IEEE802154E_TO_SIXTOP &&
-            ((QueueEntry_t*)&openqueue_vars.big_queue[i])->creator != COMPONENT_IEEE802154E) {
+        if (((QueueEntry_t*)&queue_vars.big_queue[i])->owner == COMPONENT_IEEE802154E_TO_SIXTOP &&
+            ((QueueEntry_t*)&queue_vars.big_queue[i])->creator != COMPONENT_IEEE802154E) {
             ENABLE_INTERRUPTS();
-            return (QueueEntry_t*)&openqueue_vars.big_queue[i];
+            return (QueueEntry_t*)&queue_vars.big_queue[i];
         }
     }
 #endif
@@ -253,10 +253,10 @@ QueueEntry_t* queue_sixtopGetReceivedPacket() {
     INTERRUPT_DECLARATION();
     DISABLE_INTERRUPTS();
     for (i = 0; i < QUEUE_LENGTH; i++) {
-        if (openqueue_vars.queue[i].owner == COMPONENT_IEEE802154E_TO_SIXTOP &&
-            openqueue_vars.queue[i].creator == COMPONENT_IEEE802154E) {
+        if (queue_vars.queue[i].owner == COMPONENT_IEEE802154E_TO_SIXTOP &&
+            queue_vars.queue[i].creator == COMPONENT_IEEE802154E) {
             ENABLE_INTERRUPTS();
-            return &openqueue_vars.queue[i];
+            return &queue_vars.queue[i];
         }
     }
     ENABLE_INTERRUPTS();
@@ -274,10 +274,10 @@ uint8_t queue_getNum6PReq(open_addr_t *neighbor) {
     num6Prequest = 0;
     for (i = 0; i < QUEUE_LENGTH; i++) {
         if (
-                openqueue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
-                openqueue_vars.queue[i].creator == COMPONENT_SIXTOP_RES &&
-                openqueue_vars.queue[i].l2_sixtop_messageType == SIXTOP_CELL_REQUEST &&
-                packetfunctions_sameAddress(neighbor, &openqueue_vars.queue[i].l2_nextORpreviousHop)
+                queue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
+                queue_vars.queue[i].creator == COMPONENT_SIXTOP_RES &&
+                queue_vars.queue[i].l2_sixtop_messageType == SIXTOP_CELL_REQUEST &&
+                packetfunctions_sameAddress(neighbor, &queue_vars.queue[i].l2_nextORpreviousHop)
                 ) {
             num6Prequest += 1;
         }
@@ -297,9 +297,9 @@ uint8_t queue_getNum6PResp() {
     num6Presponse = 0;
     for (i = 0; i < QUEUE_LENGTH; i++) {
         if (
-                openqueue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
-                openqueue_vars.queue[i].creator == COMPONENT_SIXTOP_RES &&
-                openqueue_vars.queue[i].l2_sixtop_messageType == SIXTOP_CELL_RESPONSE
+                queue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
+                queue_vars.queue[i].creator == COMPONENT_SIXTOP_RES &&
+                queue_vars.queue[i].l2_sixtop_messageType == SIXTOP_CELL_RESPONSE
                 ) {
             num6Presponse += 1;
         }
@@ -317,12 +317,12 @@ void queue_remove6PrequestToNeighbor(open_addr_t *neighbor) {
 
     for (i = 0; i < QUEUE_LENGTH; i++) {
         if (
-                openqueue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
-                openqueue_vars.queue[i].creator == COMPONENT_SIXTOP_RES &&
-                openqueue_vars.queue[i].l2_sixtop_messageType == SIXTOP_CELL_REQUEST &&
-                packetfunctions_sameAddress(neighbor, &openqueue_vars.queue[i].l2_nextORpreviousHop)
+                queue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
+                queue_vars.queue[i].creator == COMPONENT_SIXTOP_RES &&
+                queue_vars.queue[i].l2_sixtop_messageType == SIXTOP_CELL_REQUEST &&
+                packetfunctions_sameAddress(neighbor, &queue_vars.queue[i].l2_nextORpreviousHop)
                 ) {
-            openqueue_reset_entry(&(openqueue_vars.queue[i]));
+            queue_reset_entry(&(queue_vars.queue[i]));
         }
     }
     ENABLE_INTERRUPTS();
@@ -338,7 +338,7 @@ bool queue_isHighPriorityEntryEnough() {
 
     numberOfEntry = 0;
     for (i = 0; i < QUEUE_LENGTH; i++) {
-        if (openqueue_vars.queue[i].creator > COMPONENT_SIXTOP_RES) {
+        if (queue_vars.queue[i].creator > COMPONENT_SIXTOP_RES) {
             numberOfEntry++;
         }
     }
@@ -357,11 +357,11 @@ QueueEntry_t* queue_macGetEBPacket() {
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
    for (i=0; i < QUEUE_LENGTH; i++) {
-      if (openqueue_vars.queue[i].owner==COMPONENT_SIXTOP_TO_IEEE802154E &&
-          openqueue_vars.queue[i].creator==COMPONENT_SIXTOP              &&
-          packetfunctions_isBroadcastMulticast(&(openqueue_vars.queue[i].l2_nextORpreviousHop))) {
+      if (queue_vars.queue[i].owner==COMPONENT_SIXTOP_TO_IEEE802154E &&
+          queue_vars.queue[i].creator==COMPONENT_SIXTOP              &&
+          packetfunctions_isBroadcastMulticast(&(queue_vars.queue[i].l2_nextORpreviousHop))) {
          ENABLE_INTERRUPTS();
-         return &openqueue_vars.queue[i];
+         return &queue_vars.queue[i];
       }
    }
    ENABLE_INTERRUPTS();
@@ -373,13 +373,13 @@ QueueEntry_t* queue_macGetKaPacket(open_addr_t* toNeighbor) {
     INTERRUPT_DECLARATION();
     DISABLE_INTERRUPTS();
     for (i = 0; i < QUEUE_LENGTH; i++) {
-        if (openqueue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
-            openqueue_vars.queue[i].creator == COMPONENT_SIXTOP &&
+        if (queue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
+            queue_vars.queue[i].creator == COMPONENT_SIXTOP &&
             toNeighbor->type == ADDR_64B &&
-            packetfunctions_sameAddress(toNeighbor, &openqueue_vars.queue[i].l2_nextORpreviousHop)
+            packetfunctions_sameAddress(toNeighbor, &queue_vars.queue[i].l2_nextORpreviousHop)
                 ) {
             ENABLE_INTERRUPTS();
-            return &openqueue_vars.queue[i];
+            return &queue_vars.queue[i];
         }
     }
     ENABLE_INTERRUPTS();
@@ -391,11 +391,11 @@ QueueEntry_t*  queue_macGetDIOPacket(){
     INTERRUPT_DECLARATION();
     DISABLE_INTERRUPTS();
     for (i = 0; i < QUEUE_LENGTH; i++) {
-        if (openqueue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
-            openqueue_vars.queue[i].creator == COMPONENT_ICMPv6RPL &&
-            packetfunctions_isBroadcastMulticast(&(openqueue_vars.queue[i].l2_nextORpreviousHop))) {
+        if (queue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
+            queue_vars.queue[i].creator == COMPONENT_ICMPv6RPL &&
+            packetfunctions_isBroadcastMulticast(&(queue_vars.queue[i].l2_nextORpreviousHop))) {
             ENABLE_INTERRUPTS();
-            return &openqueue_vars.queue[i];
+            return &queue_vars.queue[i];
         }
     }
     ENABLE_INTERRUPTS();
@@ -414,19 +414,19 @@ void queue_updateNextHopPayload(open_addr_t *newNextHop) {
 
     for (i = 0; i < QUEUE_LENGTH; i++) {
         if (
-                openqueue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
+                queue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
                 (
                         newNextHop->type == ADDR_64B &&
-                        packetfunctions_sameAddress(newNextHop, &openqueue_vars.queue[i].l2_nextORpreviousHop) == FALSE
+                        packetfunctions_sameAddress(newNextHop, &queue_vars.queue[i].l2_nextORpreviousHop) == FALSE
                 )
                 ) {
             if (
-                    openqueue_vars.queue[i].creator >= COMPONENT_FORWARDING &&
-                    openqueue_vars.queue[i].l3_useSourceRouting == FALSE
+                    queue_vars.queue[i].creator >= COMPONENT_FORWARDING &&
+                    queue_vars.queue[i].l3_useSourceRouting == FALSE
                     ) {
-                memcpy(&openqueue_vars.queue[i].l2_nextORpreviousHop, newNextHop, sizeof(open_addr_t));
+                memcpy(&queue_vars.queue[i].l2_nextORpreviousHop, newNextHop, sizeof(open_addr_t));
                 for (j = 0; j < 8; j++) {
-                    *((uint8_t *) openqueue_vars.queue[i].l2_nextHop_payload + j) = newNextHop->addr_64b[j];
+                    *((uint8_t *) queue_vars.queue[i].l2_nextHop_payload + j) = newNextHop->addr_64b[j];
                 }
             }
         }
@@ -441,9 +441,9 @@ QueueEntry_t*  queue_getPacketByComponent(uint8_t component) {
     DISABLE_INTERRUPTS();
 
     for (i = 0; i < QUEUE_LENGTH; i++) {
-        if (openqueue_vars.queue[i].owner == component) {
+        if (queue_vars.queue[i].owner == component) {
             ENABLE_INTERRUPTS();
-            return &openqueue_vars.queue[i];
+            return &queue_vars.queue[i];
         }
     }
 
@@ -459,44 +459,44 @@ QueueEntry_t*  queue_macGetUnicastPacket(open_addr_t* toNeighbor){
     // first to look the sixtop RES packet
     for (i = 0; i < QUEUE_LENGTH; i++) {
         if (
-                openqueue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
-                openqueue_vars.queue[i].creator == COMPONENT_SIXTOP_RES &&
+                queue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
+                queue_vars.queue[i].creator == COMPONENT_SIXTOP_RES &&
                 (
                         toNeighbor->type == ADDR_64B &&
-                        packetfunctions_sameAddress(toNeighbor, &openqueue_vars.queue[i].l2_nextORpreviousHop)
+                        packetfunctions_sameAddress(toNeighbor, &queue_vars.queue[i].l2_nextORpreviousHop)
                 ) &&
-                openqueue_vars.queue[i].l2_sixtop_messageType == SIXTOP_CELL_RESPONSE
+                queue_vars.queue[i].l2_sixtop_messageType == SIXTOP_CELL_RESPONSE
                 ) {
             ENABLE_INTERRUPTS();
-            return &openqueue_vars.queue[i];
+            return &queue_vars.queue[i];
         }
     }
 
     // if reach here, then looking for other unicast packets
     for (i = 0; i < QUEUE_LENGTH; i++) {
         if (
-                openqueue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
+                queue_vars.queue[i].owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
                 (
                         toNeighbor->type == ADDR_64B &&
-                        packetfunctions_sameAddress(toNeighbor, &openqueue_vars.queue[i].l2_nextORpreviousHop)
+                        packetfunctions_sameAddress(toNeighbor, &queue_vars.queue[i].l2_nextORpreviousHop)
                 )
                 ) {
             ENABLE_INTERRUPTS();
-            return &openqueue_vars.queue[i];
+            return &queue_vars.queue[i];
         }
     }
 
 #if OPENWSN_6LO_FRAGMENTATION_C
     for (i = 0; i < BIG_QUEUE_LENGTH; i++) {
         if (
-                ((QueueEntry_t*)&openqueue_vars.big_queue[i])->owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
+                ((QueueEntry_t*)&queue_vars.big_queue[i])->owner == COMPONENT_SIXTOP_TO_IEEE802154E &&
                 (
                         toNeighbor->type == ADDR_64B &&
-                        packetfunctions_sameAddress(toNeighbor, &((QueueEntry_t*)&openqueue_vars.big_queue[i])->l2_nextORpreviousHop)
+                        packetfunctions_sameAddress(toNeighbor, &((QueueEntry_t*)&queue_vars.big_queue[i])->l2_nextORpreviousHop)
                 )
                 ) {
             ENABLE_INTERRUPTS();
-            return (QueueEntry_t*)&openqueue_vars.big_queue[i];
+            return (QueueEntry_t*)&queue_vars.big_queue[i];
         }
     }
 #endif
@@ -507,7 +507,7 @@ QueueEntry_t*  queue_macGetUnicastPacket(open_addr_t* toNeighbor){
 
 //=========================== private =========================================
 
-void openqueue_reset_entry(QueueEntry_t *entry) {
+void queue_reset_entry(QueueEntry_t *entry) {
     //admin
     entry->creator = COMPONENT_NULL;
     entry->owner = COMPONENT_NULL;
@@ -543,8 +543,8 @@ void openqueue_reset_entry(QueueEntry_t *entry) {
 }
 
 #if OPENWSN_6LO_FRAGMENTATION_C
-void openqueue_reset_big_entry(OpenQueueBigEntry_t *entry) {
-    openqueue_reset_entry(&(entry->standard_entry));
+void queue_reset_big_entry(QueueBigEntry_t *entry) {
+    queue_reset_entry(&(entry->standard_entry));
 
     // reset pointer to the end op the extended buffer
     entry->standard_entry.payload = &(entry->standard_entry.packet[IPV6_PACKET_SIZE]);

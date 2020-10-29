@@ -308,7 +308,7 @@ owerror_t packetfunctions_reserveHeader(QueueEntry_t **pkt, uint16_t header_leng
         }
 
         QueueEntry_t *bpkt;
-        if ((bpkt = openqueue_getFreeBigPacketBuffer((*pkt)->creator)) == NULL) {
+        if ((bpkt = queue_getFreeBigPacketBuffer((*pkt)->creator)) == NULL) {
             return E_FAIL;
         }
 
@@ -317,11 +317,11 @@ owerror_t packetfunctions_reserveHeader(QueueEntry_t **pkt, uint16_t header_leng
         // reset some packet metadata
         bpkt->length = 0;
         bpkt->is_big_packet = TRUE;
-        bpkt->payload = &(((OpenQueueBigEntry_t *) bpkt)->packet_remainder[IPV6_PACKET_SIZE - IEEE802154_FRAME_SIZE]);
+        bpkt->payload = &(((QueueBigEntry_t *) bpkt)->packet_remainder[IPV6_PACKET_SIZE - IEEE802154_FRAME_SIZE]);
 
         // copy contents from small packet to new packet
         if (packetfunctions_reserveHeader(&bpkt, (*pkt)->length) == E_FAIL) {
-            openqueue_freePacketBuffer(bpkt);
+            queue_freePacketBuffer(bpkt);
             return E_FAIL;
         }
         memcpy(bpkt->payload, (*pkt)->payload, (*pkt)->length);
@@ -329,14 +329,14 @@ owerror_t packetfunctions_reserveHeader(QueueEntry_t **pkt, uint16_t header_leng
 
         // now reserve the original requested allocation
         if (packetfunctions_reserveHeader(&bpkt, header_length) == E_FAIL) {
-            openqueue_freePacketBuffer(bpkt);
+            queue_freePacketBuffer(bpkt);
             return E_FAIL;
         }
 
         LOG_VERBOSE(COMPONENT_PACKETFUNCTIONS, ERR_COPY_TO_BPKT, (*pkt)->length + header_length, available_bytes);
 
-        // release normal OpenQueueEntry
-        openqueue_freePacketBuffer((*pkt));
+        // release normal QueueEntry
+        queue_freePacketBuffer((*pkt));
 
         // set pointer
         (*pkt) = bpkt;
@@ -368,7 +368,7 @@ owerror_t packetfunctions_reserveHeader(QueueEntry_t **pkt, uint16_t header_leng
         // check for buffer overflow on the left and on the right
         if ((uint8_t * )((*pkt)->payload) < (uint8_t * )((*pkt)->packet) ||
             (*pkt)->payload + (*pkt)->length >
-            &(((OpenQueueBigEntry_t *) (*pkt))->packet_remainder[IPV6_PACKET_SIZE - IEEE802154_FRAME_SIZE])) {
+            &(((QueueBigEntry_t *) (*pkt))->packet_remainder[IPV6_PACKET_SIZE - IEEE802154_FRAME_SIZE])) {
             LOG_CRITICAL(COMPONENT_PACKETFUNCTIONS, ERR_PACKET_TOO_LONG,
                          (errorparameter_t) (*pkt)->length,
                          (errorparameter_t) header_length);
@@ -424,7 +424,7 @@ void packetfunctions_tossHeader(QueueEntry_t **pkt, uint16_t header_length) {
     } else {
         // CASE 2: is a big packet
         if ((uint8_t * )((*pkt)->payload + header_length) >
-            &(((OpenQueueBigEntry_t *) (*pkt))->packet_remainder[IPV6_PACKET_SIZE - IEEE802154_FRAME_SIZE]) ||
+            &(((QueueBigEntry_t *) (*pkt))->packet_remainder[IPV6_PACKET_SIZE - IEEE802154_FRAME_SIZE]) ||
             (*pkt)->length - header_length < 0) {
             LOG_CRITICAL(COMPONENT_PACKETFUNCTIONS, ERR_PACKET_TOO_SHORT,
                          (errorparameter_t) (*pkt)->length,
@@ -439,7 +439,7 @@ void packetfunctions_tossHeader(QueueEntry_t **pkt, uint16_t header_length) {
 
             // try moving to a smaller packet
             QueueEntry_t *spkt;
-            if ((spkt = openqueue_getFreePacketBuffer((*pkt)->creator)) == NULL) {
+            if ((spkt = queue_getFreePacketBuffer((*pkt)->creator)) == NULL) {
                 return;
             }
 
@@ -450,7 +450,7 @@ void packetfunctions_tossHeader(QueueEntry_t **pkt, uint16_t header_length) {
             spkt->payload = &spkt->packet[available_bytes];
 
             if (packetfunctions_reserveHeader(&spkt, (*pkt)->length) == E_FAIL) {
-                openqueue_freePacketBuffer(spkt);
+                queue_freePacketBuffer(spkt);
                 return;
             }
 
@@ -459,8 +459,8 @@ void packetfunctions_tossHeader(QueueEntry_t **pkt, uint16_t header_length) {
 
             LOG_VERBOSE(COMPONENT_PACKETFUNCTIONS, ERR_COPY_TO_SPKT, (*pkt)->length, available_bytes);
 
-            // release OpenQueueBigEntry
-            openqueue_freePacketBuffer((*pkt));
+            // release QueueBigEntry
+            queue_freePacketBuffer((*pkt));
 
             // set pointer
             (*pkt) = spkt;
@@ -509,7 +509,7 @@ void packetfunctions_tossFooter(QueueEntry_t **pkt, uint16_t footer_length) {
 
 
 //======= packet duplication
-// function duplicates a frame from one OpenQueueEntry structure to the other,
+// function duplicates a frame from one QueueEntry structure to the other,
 // updating pointers to the new memory location. Used to make a local copy of
 // the frame before transmission (where it can possibly be encrypted). 
 void packetfunctions_duplicatePacket(QueueEntry_t *dst, QueueEntry_t *src) {

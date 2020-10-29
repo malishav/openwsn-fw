@@ -11,17 +11,17 @@ This module implements 6LoWPAN fragmentation according to RFC 4944,
 
 #if OPENWSN_6LO_FRAGMENTATION_C
 
-#include "opendefs.h"
+#include "defs.h"
 #include "frag.h"
 #include "iphc.h"
-#include "openbridge.h"
+#include "bridge.h"
 #include "sixtop.h"
-#include "openrandom.h"
-#include "openserial.h"
+#include "random.h"
+#include "serial.h"
 #include "packetfunctions.h"
 #include "idmanager.h"
 #include "board.h"
-#include "opentimers.h"
+#include "timers.h"
 #include "scheduler.h"
 
 //============================ defines ========================================
@@ -41,7 +41,7 @@ This module implements 6LoWPAN fragmentation according to RFC 4944,
 #define RESET_FRAG_BUFFER_ENTRY(i) \
     do { \
         if (ISLOCKED(frag_vars.fragmentBuf[i]) == FALSE) { \
-            openqueue_freePacketBuffer(frag_vars.fragmentBuf[i].pFragment); \
+            queue_freePacketBuffer(frag_vars.fragmentBuf[i].pFragment); \
             memset(&frag_vars.fragmentBuf[i], 0, sizeof(fragment)); \
         } \
     } while (0)
@@ -106,7 +106,7 @@ owerror_t frag_fragment6LoPacket(QueueEntry_t *msg) {
         // start fragmenting
         while (remaining_bytes > 0) {
 
-            lowpan_fragment = openqueue_getFreePacketBuffer(COMPONENT_FRAG);
+            lowpan_fragment = queue_getFreePacketBuffer(COMPONENT_FRAG);
             if (lowpan_fragment == NULL) {
                 // 6LoWPAN packet couldn't be entirely fragmented, thus clean up previously created fragments and exit.
                 LOG_ERROR(COMPONENT_FRAG, ERR_NO_FREE_PACKET_BUFFER,
@@ -135,7 +135,7 @@ owerror_t frag_fragment6LoPacket(QueueEntry_t *msg) {
 
             // if fragmentation buffer is full, delete previously created fragments and abandon here
             if (bpos == -1) {
-                openqueue_freePacketBuffer(lowpan_fragment);
+                queue_freePacketBuffer(lowpan_fragment);
 
                 cleanup_fragments(frag_vars.global_tag);
 
@@ -259,7 +259,7 @@ void frag_sendDone(QueueEntry_t *msg, owerror_t sendError) {
             cleanup_fragments(datagram_tag);
             iphc_sendDone(original_msg, sendError);
         } else {
-            openqueue_freePacketBuffer(msg);
+            queue_freePacketBuffer(msg);
         }
     } else if (msg->l3_isFragment && msg->l3_useSourceRouting) {
 
@@ -275,7 +275,7 @@ void frag_sendDone(QueueEntry_t *msg, owerror_t sendError) {
 
         if (k >= FRAGMENT_BUFFER_SIZE) {
             // fragment not found in fragment buffer (it was never stored locally, immediately fast-forwarded)
-            openqueue_freePacketBuffer(msg);
+            queue_freePacketBuffer(msg);
         }
 
     } else {
@@ -311,7 +311,7 @@ void frag_receive(QueueEntry_t *msg) {
 
         // protection against oversized packets.
         if (size > (IPV6_PACKET_SIZE)) {
-            openqueue_freePacketBuffer(msg);
+            queue_freePacketBuffer(msg);
             LOG_ERROR(COMPONENT_FRAG, ERR_FRAG_INVALID_SIZE, (errorparameter_t) size,
                       (errorparameter_t) IPV6_PACKET_SIZE);
             return;
@@ -324,7 +324,7 @@ void frag_receive(QueueEntry_t *msg) {
             // recover ip address from first fragment
             packetfunctions_tossHeader(&msg, FRAG1_HEADER_SIZE);
             if (iphc_retrieveIPv6Header(msg, &ipv6_outer_header, &ipv6_inner_header, &page_length) == E_FAIL){
-                openqueue_freePacketBuffer(msg);
+                queue_freePacketBuffer(msg);
                 return;
             }
 
@@ -347,7 +347,7 @@ void frag_receive(QueueEntry_t *msg) {
 
         // protection against oversized packets.
         if (size > (IPV6_PACKET_SIZE)) {
-            openqueue_freePacketBuffer(msg);
+            queue_freePacketBuffer(msg);
             LOG_ERROR(COMPONENT_FRAG, ERR_FRAG_INVALID_SIZE, (errorparameter_t) size,
                       (errorparameter_t) IPV6_PACKET_SIZE);
             return;
@@ -438,7 +438,7 @@ static void store_fragment(QueueEntry_t *msg, uint16_t size, uint16_t tag, uint8
     // check if we have running reassembly timer
     for (i = 0; i < FRAGMENT_BUFFER_SIZE; i++) {
         if (frag_vars.fragmentBuf[i].datagram_tag == tag && frag_vars.fragmentBuf[i].datagram_offset == offset) {
-            openqueue_freePacketBuffer(msg);
+            queue_freePacketBuffer(msg);
             return;
         }
 
@@ -518,7 +518,7 @@ static void store_fragment(QueueEntry_t *msg, uint16_t size, uint16_t tag, uint8
     if (do_reassemble) {
         QueueEntry_t *reassembled_msg;
 
-        if ((reassembled_msg = openqueue_getFreeBigPacketBuffer(COMPONENT_FRAG)) == NULL) {
+        if ((reassembled_msg = queue_getFreeBigPacketBuffer(COMPONENT_FRAG)) == NULL) {
             LOG_ERROR(COMPONENT_FRAG, ERR_NO_FREE_PACKET_BUFFER, (errorparameter_t) 1, (errorparameter_t) 0);
             cleanup_fragments(tag);
             return;
